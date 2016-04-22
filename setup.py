@@ -59,7 +59,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'beet = musicscout.ui:main',
+            'musicscout = musicscout.ui:main',
         ],
     },
 
