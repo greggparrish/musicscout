@@ -1,6 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+
+"""
+- Need to add db, or possibly just flat file listing last time each url was dled
+- Consider using article title as song title
+"""
+
 from __future__ import print_function
 from bs4 import BeautifulSoup
 import configparser
@@ -21,7 +27,7 @@ def config():
   config.read(ConfigPath+'config')
   storage_dir = config['storage']['save_to']
   if '~' in storage_dir:
-     storage_dir = os.path.expanduser(storage_dir)
+    storage_dir = os.path.expanduser(storage_dir)
   return storage_dir
 
 def create_storage_dir():
@@ -52,18 +58,25 @@ def get_urls():
   return feeds
 
 def grab_media_links(page):
-  r = BeautifulSoup(get(page).content, 'lxml')
-  frames = r.find_all('iframe')
-  for f in frames:
-    link = f['src']
-    if 'youtu' in link:
-      grab_yt(link)
-    elif 'soundcloud' in link:
-      grab_sc(link)
-    elif 'bandcamp' in link:
-      grab_bc(link)
-    elif 'vimeo' in link:
-      grab_vm(link)
+  if 'youtu' in page:
+    grab_yt(page)
+  else:
+    r = BeautifulSoup(get(page).content, 'lxml')
+    frames = r.find_all('iframe')
+    for f in frames:
+      link = f['src']
+      '''
+      if 'youtu' in link:
+        grab_yt(link)
+      elif 'soundcloud' in link:
+        grab_sc(link)
+        '''
+      if 'bandcamp' in link:
+        grab_bc(link)
+        '''
+      elif 'vimeo' in link:
+        grab_vm(link)
+        '''
 
 def grab_vm(link):
   download_all(link)
@@ -75,19 +88,25 @@ def grab_yt(link):
   download_all(link)
 
 def grab_bc(link):
-  download_all(link)
+  batchdir = create_batch_dir()
+  r = BeautifulSoup(get(link).content, 'lxml')
+  files = []
+  for n in r.find_all('audio'):
+    files.append(n.get('src'))
+    for file in files:
+      get(file, filename=batch_dir)
 
 def download_all(link):
   batchdir = create_batch_dir()
   ydl_opts = {
-    'outtmpl' : batchdir+'/%(title)s_%(id)s.%(ext)s',
-    'format': 'bestaudio/best',
-    'postprocessors': [{
+      'outtmpl' : batchdir+'/%(title)s_%(id)s.%(ext)s',
+      'format': 'bestaudio/best',
+      'postprocessors': [{
         'key': 'FFmpegExtractAudio',
         'preferredcodec': 'mp3',
         'preferredquality': '192',
-    }],
-  }
+        }],
+      }
   with youtube_dl.YoutubeDL(ydl_opts) as ydl:
     try:
       ydl.download([link])
