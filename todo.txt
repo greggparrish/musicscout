@@ -1,2 +1,0 @@
-- mk ~. folder with config and urls
-- read from ~.
