@@ -16,9 +16,12 @@ import re
 from requests import get
 import shutil
 import sys
-import time
+from time import mktime
+from datetime import datetime
 from urllib.parse import urlparse, parse_qs
 import youtube_dl
+
+from dbcore.db import *
 
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 
@@ -49,5 +52,9 @@ for f in feeds:
   '''
   get most recent post
   '''
+  Database.check_url(f)
   posts = feedparser.parse(f)
-  print(posts.entries[0].updated_parsed)
+  date = posts.entries[0].updated_parsed
+  now = datetime.now()
+  post_time = datetime.fromtimestamp(mktime(date))
+

@@ -20,6 +20,8 @@ import time
 from urllib.parse import urlparse, parse_qs
 import youtube_dl
 
+from musicscout.db import *
+
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 
 def config():
