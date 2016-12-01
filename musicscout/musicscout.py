@@ -1,139 +1,107 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
+#!/usr/bin/python3
 
 
 """
-- Need to add db, or possibly just flat file listing last time each url was dled
-- Consider using article title as song title
+  TODO:
+  - read urls
+  - add/rm from db
+  - get all urls
+  - for each url, get all media more recent than last_updated (or cutoff of a few months ago?)
+  - download media
+  - metadata?  Esp for yt clips
+  - update mpd
+  - add to mpd playlist: (scout_date_genre) config: naming pattern
+  - exit after updating media from feeds
+  - log
 """
 
-from __future__ import print_function
-from bs4 import BeautifulSoup
-import configparser
-import feedparser
 import os
 import re
-from requests import get
 import shutil
 import sys
 import time
-from urllib.parse import urlparse, parse_qs
+
+from bs4 import BeautifulSoup
+import configparser
+import feedparser
+import requests
 import youtube_dl
 
-from musicscout.db import *
+from config import Config
+import db
+from messages import Messages
+from utils import Utils, MPDClient
 
+c = Config().conf_vars()
+d = db.Database()
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 
-def config():
-  config = configparser.ConfigParser()
-  config.read(ConfigPath+'config')
-  storage_dir = config['storage']['save_to']
-  if '~' in storage_dir:
-    storage_dir = os.path.expanduser(storage_dir)
-  return storage_dir
+class Musicscout():
+  def __init__(self):
+    ut = Utils()
+    ut.symlink_musicdir()
+    ut.clear_cache()
 
-def create_storage_dir():
-  sd = config()
-  if not os.path.exists(sd):
-    os.makedirs(sd)
+  def get_urls(self):
+    """
+    Open urls file in .config, make list
+    """
+    feeds = []
+    feedfile = open(ConfigPath+'urls')
+    for line in feedfile:
+      line = line.replace('\n','').strip()
+      line = line.split('|')
+      try:
+        genre = line[1].strip()
+      except:
+        genre = ''
+      if line[0]:
+        d.add_url(line[0])
+        feeds += [[line[0],genre]]
+    feedfile.close()
+    print(feeds)
+    return feeds
 
-def create_batch_dir():
-  sd = config()
-  nowtime = time.strftime("%b_%d_%Y")
-  batchdir = os.path.join(sd, 'music_for_'+nowtime)
-  if not os.path.exists(batchdir):
-    os.makedirs(batchdir)
-  return batchdir
+  def get_pages(self, feeds):
+    for f in feeds:
+      posts = feedparser.parse(f)
+      for p in posts.entries:
+        print(p)
+        Database.check_url(f)
+        posts = feedparser.parse(f)
+        date = posts.entries[0].updated_parsed
+        now = datetime.now()
+        post_time = datetime.fromtimestamp(mktime(date))
 
-def get_urls():
-  """
-  Open urls file in .config, make list
-  """
-  feeds = []
-  feedfile = open(ConfigPath+'urls')
-  for line in feedfile:
-    line = line.rstrip()
-    if not line or line.startswith('#'):
-      continue
-    feeds.append(line)
-  feedfile.close()
-  return feeds
+  def grab_media_links(self, page):
+    if 'youtu' in page:
+      grab_yt(page)
+    else:
+      r = BeautifulSoup(get(page).content, 'lxml')
+      frames = r.find_all('iframe')
+      for f in frames:
+        link = f['src']
+        print(link)
 
-def grab_media_links(page):
-  if 'youtu' in page:
-    grab_yt(page)
-  else:
-    r = BeautifulSoup(get(page).content, 'lxml')
-    frames = r.find_all('iframe')
-    for f in frames:
-      link = f['src']
-      '''
-      if 'youtu' in link:
-        grab_yt(link)
-      elif 'soundcloud' in link:
-        grab_sc(link)
-        '''
-      if 'bandcamp' in link:
-        grab_bc(link)
-        '''
-      elif 'vimeo' in link:
-        grab_vm(link)
-        '''
+  def download_all(self, link):
+    batchdir = create_batch_dir()
+    ydl_opts = {
+        'outtmpl' : batchdir+'/%(title)s_%(id)s.%(ext)s',
+        'format': 'bestaudio/best',
+        'postprocessors': [{
+          'key': 'FFmpegExtractAudio',
+          'preferredcodec': 'mp3',
+          'preferredquality': '192',
+          }],
+        }
+    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+      try:
+        ydl.download([link])
+      except:
+        pass
 
-def grab_vm(link):
-  download_all(link)
+ms = Musicscout()
+feeds = ms.get_urls()
 
-def grab_sc(link):
-  download_all(link)
-
-def grab_yt(link):
-  download_all(link)
-
-def grab_bc(link):
-  batchdir = create_batch_dir()
-  r = BeautifulSoup(get(link).content, 'lxml')
-  files = []
-  for n in r.find_all('audio'):
-    files.append(n.get('src'))
-    for file in files:
-      get(file, filename=batch_dir)
-
-def download_all(link):
-  batchdir = create_batch_dir()
-  ydl_opts = {
-      'outtmpl' : batchdir+'/%(title)s_%(id)s.%(ext)s',
-      'format': 'bestaudio/best',
-      'postprocessors': [{
-        'key': 'FFmpegExtractAudio',
-        'preferredcodec': 'mp3',
-        'preferredquality': '192',
-        }],
-      }
-  with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-    try:
-      ydl.download([link])
-    except:
-      pass
-
-def get_yt_video_id(url):
-  """Returns Video_ID extracting from the given url of Youtube
-  """
-  if url.startswith(('youtu', 'www')):
-    url = 'http://' + url
-  query = urlparse(url)
-  if 'youtube' in query.hostname:
-    if query.path == '/watch':
-      return parse_qs(query.query)['v'][0]
-    elif query.path.startswith(('/embed/', '/v/')):
-      return query.path.split('/')[2]
-  elif 'youtu.be' in query.hostname:
-    return query.path[1:]
-  else:
-    raise ValueError
-
-
-feeds = get_urls()
-for f in feeds:
-  posts = feedparser.parse(f)
-  for p in posts.entries:
-    grab_media_links(p.link)
+"""
+    """
