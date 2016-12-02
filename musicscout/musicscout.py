@@ -1,16 +1,13 @@
 #!/usr/bin/python3
 
-
 """
   TODO:
-  - read urls
   - add/rm from db
-  - get all urls
   - for each url, get all media more recent than last_updated (or cutoff of a few months ago?)
-  - download media
+  - download media if < 10 min
   - metadata?  Esp for yt clips
   - update mpd
-  - add to mpd playlist: (scout_date_genre) config: naming pattern
+  - add to mpd playlists: (scout_genre, and scout_genre_new [or scout_genre_date?]) config: naming pattern
   - exit after updating media from feeds
   - log
 """
@@ -25,12 +22,14 @@ from bs4 import BeautifulSoup
 import configparser
 import feedparser
 import requests
+from slugify import slugify
 import youtube_dl
 
 from config import Config
 import db
 from messages import Messages
-from utils import Utils, MPDClient
+from mpd import MPDQueue
+from utils import Utils
 
 c = Config().conf_vars()
 d = db.Database()
@@ -40,7 +39,7 @@ class Musicscout():
   def __init__(self):
     ut = Utils()
     ut.symlink_musicdir()
-    ut.clear_cache()
+    #ut.clear_cache()
 
   def get_urls(self):
     """
@@ -52,41 +51,35 @@ class Musicscout():
       line = line.replace('\n','').strip()
       line = line.split('|')
       try:
-        genre = line[1].strip()
+        genre = slugify(line[1])
       except:
-        genre = ''
+        genre = 'uncategorized'
       if line[0]:
-        d.add_url(line[0])
-        feeds += [[line[0],genre]]
+        feed = line[0]
+        d.add_url(feed)
+        feeds += [[feed,genre]]
+        self.get_media_links(feed, genre)
     feedfile.close()
-    print(feeds)
     return feeds
 
-  def get_pages(self, feeds):
-    for f in feeds:
-      posts = feedparser.parse(f)
-      for p in posts.entries:
-        print(p)
-        Database.check_url(f)
-        posts = feedparser.parse(f)
-        date = posts.entries[0].updated_parsed
-        now = datetime.now()
-        post_time = datetime.fromtimestamp(mktime(date))
-
-  def grab_media_links(self, page):
-    if 'youtu' in page:
-      grab_yt(page)
-    else:
-      r = BeautifulSoup(get(page).content, 'lxml')
+  def get_media_links(self, feed, genre):
+    """ get posts for a feed, strip media links  """
+    posts = feedparser.parse(feed)
+    genre_dir = Config().build_dirs(os.path.join(c['cache_dir'], genre))
+    for p in posts.entries:
+      r = BeautifulSoup(requests.get(p.link).content, 'lxml')
       frames = r.find_all('iframe')
       for f in frames:
         link = f['src']
-        print(link)
+      if 'youtu' in link:
+        self.yt_dl(p.link,genre)
+      else:
+        pass
 
-  def download_all(self, link):
-    batchdir = create_batch_dir()
+  def yt_dl(self, link, genre):
+    genre_dir = os.path.join(c['cache_dir'],genre) 
     ydl_opts = {
-        'outtmpl' : batchdir+'/%(title)s_%(id)s.%(ext)s',
+        'outtmpl' : genre_dir+'/%(title)s_%(id)s.%(ext)s',
         'format': 'bestaudio/best',
         'postprocessors': [{
           'key': 'FFmpegExtractAudio',
@@ -102,6 +95,3 @@ class Musicscout():
 
 ms = Musicscout()
 feeds = ms.get_urls()
-
-"""
-    """

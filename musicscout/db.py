@@ -35,9 +35,3 @@ class Database:
     with dbconn(feeds_db) as c:
       added = c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
     return added
-
-  def check_url():
-    """ get all urls """
-    with dbconn(feeds_db) as c:
-      feeds = c.execute("SELECT url FROM feeds").fetchall()
-    return feeds
