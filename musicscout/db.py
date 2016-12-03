@@ -28,10 +28,27 @@ class Database:
 
   def _create_table(self):
     with dbconn(feeds_db) as c:
-      c.execute('CREATE TABLE IF NOT EXISTS feeds (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, last_update DATE)')
+      c.execute('CREATE TABLE IF NOT EXISTS feeds (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, last_update TIMESTAMP)')
+      c.execute('CREATE TABLE IF NOT EXISTS songs (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE)')
+
+  def updated(self, feed, timestamp):
+    """ update url with last time updated """
+    with dbconn(feeds_db) as c:
+      url = c.execute("UPDATE feeds SET last_update=? where url = ?", (timestamp,feed,))
 
   def add_url(self,feed):
     """ add url to db """
     with dbconn(feeds_db) as c:
-      added = c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
-    return added
+      url = c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
+
+  def check_song(self, track):
+    """ check db for a track """
+    with dbconn(feeds_db) as c:
+      song = c.execute("SELECT url FROM songs WHERE url = ?", (track,)).fetchone()
+      return song
+
+  def add_song(self, track):
+    """ add url to db """
+    with dbconn(feeds_db) as c:
+      song = c.execute("INSERT OR IGNORE INTO songs (url) VALUES(?)", (track,))
+

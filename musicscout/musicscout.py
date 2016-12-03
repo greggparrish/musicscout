@@ -2,14 +2,16 @@
 
 """
   TODO:
+  - GOOGLE RECAPTCHA
   - add/rm from db
-  - for each url, get all media more recent than last_updated (or cutoff of a few months ago?)
+  - for each url, get all media more recent than last_updated (or cutoff of a few months ago?) Set last_updated as last function in loop so incomplete donwloads can restart
   - download media if < 10 min
   - metadata?  Esp for yt clips
   - update mpd
   - add to mpd playlists: (scout_genre, and scout_genre_new [or scout_genre_date?]) config: naming pattern
   - exit after updating media from feeds
   - log
+  - add url to metadata?
 """
 
 import os
@@ -20,6 +22,7 @@ import time
 
 from bs4 import BeautifulSoup
 import configparser
+import datetime
 import feedparser
 import requests
 from slugify import slugify
@@ -59,6 +62,8 @@ class Musicscout():
         d.add_url(feed)
         feeds += [[feed,genre]]
         self.get_media_links(feed, genre)
+        timestamp = datetime.datetime.now()
+        d.updated(feed,timestamp)
     feedfile.close()
     return feeds
 
@@ -66,15 +71,21 @@ class Musicscout():
     """ get posts for a feed, strip media links  """
     posts = feedparser.parse(feed)
     genre_dir = Config().build_dirs(os.path.join(c['cache_dir'], genre))
+    media_sites = ['youtu', 'bandcamp', 'soundcloud']
     for p in posts.entries:
       r = BeautifulSoup(requests.get(p.link).content, 'lxml')
       frames = r.find_all('iframe')
       for f in frames:
         link = f['src']
-      if 'youtu' in link:
-        self.yt_dl(p.link,genre)
-      else:
-        pass
+        try:
+          check_song = d.check_song(link.split('?',1)[0])
+          if check_song and any(m in link for m in media_sites):
+            self.yt_dl(link,genre)
+          else:
+            print(link)
+        except:
+          print("NOPE: {}".format(link))
+          pass
 
   def yt_dl(self, link, genre):
     genre_dir = os.path.join(c['cache_dir'],genre) 
@@ -90,6 +101,7 @@ class Musicscout():
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
       try:
         ydl.download([link])
+        add_song = d.add_song(link.split('?',1)[0])
       except:
         pass
 
