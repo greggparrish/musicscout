@@ -36,11 +36,11 @@ from utils import Utils
 
 c = Config().conf_vars()
 d = db.Database()
+ut = Utils()
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 
 class Musicscout():
   def __init__(self):
-    ut = Utils()
     ut.symlink_musicdir()
     #ut.clear_cache()
 
@@ -78,13 +78,14 @@ class Musicscout():
       for f in frames:
         link = f['src']
         try:
-          check_song = d.check_song(link.split('?',1)[0])
-          if check_song and any(m in link for m in media_sites):
+          f_link = ut.format_link(link) 
+          check_song = d.check_song(f_link)
+          if check_song and any(m in f_link for m in media_sites):
             self.yt_dl(link,genre)
           else:
-            print(link)
+            print("Did not dl: ".format(link))
         except:
-          print("NOPE: {}".format(link))
+          print("Non-working link: {}".format(link))
           pass
 
   def yt_dl(self, link, genre):

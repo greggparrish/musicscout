@@ -29,3 +29,12 @@ class Utils:
       os.makedirs(path)
     return path
 
+  def format_link(self,link):
+    if 'recaptcha' or 'widgets.wp.com' in link:
+      fl = False
+    if 'youtu' in link:
+      fl = link.split('?')[0]
+    if 'soundcloud' in link:
+      fl = link.split('&')[0]
+    return fl
+
