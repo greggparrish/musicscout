@@ -76,16 +76,18 @@ class Musicscout():
       r = BeautifulSoup(requests.get(p.link).content, 'lxml')
       frames = r.find_all('iframe')
       for f in frames:
-        link = f['src']
         try:
+          link = f['src']
           f_link = ut.format_link(link) 
           check_song = d.check_song(f_link)
           if check_song and any(m in f_link for m in media_sites):
             self.yt_dl(link,genre)
+            add_song = d.add_song(f_link)
+            print("Downloaded: {} ".format(link))
           else:
-            print("Did not dl: ".format(link))
+            print("Did not dl: {} ".format(f_link))
         except:
-          print("Non-working link: {}".format(link))
+          print("Non-working link: {}".format(f))
           pass
 
   def yt_dl(self, link, genre):
@@ -102,7 +104,6 @@ class Musicscout():
     with youtube_dl.YoutubeDL(ydl_opts) as ydl:
       try:
         ydl.download([link])
-        add_song = d.add_song(link.split('?',1)[0])
       except:
         pass
 
