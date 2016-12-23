@@ -41,6 +41,12 @@ class Database:
     with dbconn(feeds_db) as c:
       url = c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
 
+  def update_time(self, url):
+    """ check db for last time a feed was updated """
+    with dbconn(feeds_db) as c:
+      feed_date = c.execute("SELECT last_update FROM feeds WHERE url = ?", (url,)).fetchone()
+      return feed_date
+
   def check_song(self, track):
     """ check db for a track """
     with dbconn(feeds_db) as c:

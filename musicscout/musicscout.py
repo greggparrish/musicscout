@@ -59,7 +59,7 @@ class Musicscout():
         genre = 'uncategorized'
       if line[0]:
         feed = line[0]
-        d.add_url(feed)
+        d.add_url(feed.strip())
         feeds += [[feed,genre]]
         self.get_media_links(feed, genre)
         timestamp = datetime.datetime.now()
@@ -69,10 +69,15 @@ class Musicscout():
 
   def get_media_links(self, feed, genre):
     """ get posts for a feed, strip media links  """
+    feed_date = d.update_time(feed)
+    print("Date: ".format(feed_date))
     posts = feedparser.parse(feed)
+    for p in posts.entries:
+      print(p['updated'])
     genre_dir = Config().build_dirs(os.path.join(c['cache_dir'], genre))
     media_sites = ['youtu', 'bandcamp', 'soundcloud']
     for p in posts.entries:
+      print(feed)
       r = BeautifulSoup(requests.get(p.link).content, 'lxml')
       frames = r.find_all('iframe')
       for f in frames:
@@ -81,9 +86,9 @@ class Musicscout():
           f_link = ut.format_link(link) 
           check_song = d.check_song(f_link)
           if check_song and any(m in f_link for m in media_sites):
+            print("Downloading: {} ".format(link))
             self.yt_dl(link,genre)
-            add_song = d.add_song(f_link)
-            print("Downloaded: {} ".format(link))
+            add_song = d.add_song(f_link.strip())
           else:
             print("Did not dl: {} ".format(f_link))
         except:
