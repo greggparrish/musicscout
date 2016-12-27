@@ -75,31 +75,42 @@ class Musicscout():
     for p in posts.entries:
       print(p['updated'])
     genre_dir = Config().build_dirs(os.path.join(c['cache_dir'], genre))
-    media_sites = ['youtu', 'bandcamp', 'soundcloud']
+    media_sites = ['youtu', 'bandcamp', 'soundcloud', 'redditmedia']
     for p in posts.entries:
       print(feed)
-      r = BeautifulSoup(requests.get(p.link).content, 'lxml')
-      frames = r.find_all('iframe')
-      for f in frames:
-        try:
-          link = f['src']
-          f_link = ut.format_link(link) 
-          check_song = d.check_song(f_link)
-          if check_song and any(m in f_link for m in media_sites):
-            print("Downloading: {} ".format(link))
-            self.yt_dl(link,genre)
-            add_song = d.add_song(f_link.strip())
-          else:
-            print("Did not dl: {} ".format(f_link))
-        except:
-          print("Non-working link: {}".format(f))
-          pass
+      try:
+        r = BeautifulSoup(requests.get(p.link).content, 'lxml')
+        frames = r.find_all('iframe')
+        for f in frames:
+          try:
+            print("LINK: {}".format(f))
+            if 'bandcamp' in f['src']:
+              fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
+              f_link = fl.group(1)
+              link = f_link
+            else:
+              link = f['src']
+              f_link = ut.format_link(link) 
+            check_song = d.check_song(f_link)
+            print("URL {}".format(f_link))
+            if not check_song and any(m in f_link for m in media_sites):
+              print("Downloading: {} ".format(link))
+              self.yt_dl(link,genre)
+              add_song = d.add_song(f_link)
+            else:
+              print("Did not dl: {} ".format(f_link))
+          except:
+            print("Non-working link: {}".format(f))
+            pass
+      except:
+        pass
 
   def yt_dl(self, link, genre):
     genre_dir = os.path.join(c['cache_dir'],genre) 
     ydl_opts = {
         'outtmpl' : genre_dir+'/%(title)s_%(id)s.%(ext)s',
         'format': 'bestaudio/best',
+        'max-downloads': '3',
         'postprocessors': [{
           'key': 'FFmpegExtractAudio',
           'preferredcodec': 'mp3',

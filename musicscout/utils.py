@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
+from bs4 import BeautifulSoup
 import datetime
 import os
 import re
+import requests
 import time
-import webbrowser
 
 from config import Config
 import db
@@ -36,5 +37,7 @@ class Utils:
       fl = link.split('?')[0]
     if 'soundcloud' in link:
       fl = link.split('&')[0]
-    return fl
+    if 'redditmedia' in link:
+      fl = "https:"+link
+    return fl.strip()
 
