@@ -1,10 +1,11 @@
 #!/usr/bin/python3
 
+import datetime
 import sqlite3
 import os
 
 config_path = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
-feeds_db =  os.path.join(config_path, 'feeds.db')
+feeds_db = os.path.join(config_path, 'feeds.db')
 
 class dbconn(object):
     """ DB context manager """
@@ -31,17 +32,17 @@ class Database:
       c.execute('CREATE TABLE IF NOT EXISTS feeds (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, last_update TIMESTAMP)')
       c.execute('CREATE TABLE IF NOT EXISTS songs (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE)')
 
-  def updated(self, feed, timestamp):
+  def update_time(self, feed, timestamp):
     """ update url with last time updated """
     with dbconn(feeds_db) as c:
-      url = c.execute("UPDATE feeds SET last_update=? where url = ?", (timestamp,feed,))
+      c.execute("UPDATE feeds SET last_update=? where url = ?", (timestamp,feed,))
 
   def add_url(self,feed):
     """ add url to db """
     with dbconn(feeds_db) as c:
-      url = c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
+      c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
 
-  def update_time(self, url):
+  def feed_time(self, url):
     """ check db for last time a feed was updated """
     with dbconn(feeds_db) as c:
       feed_date = c.execute("SELECT last_update FROM feeds WHERE url = ?", (url,)).fetchone()
@@ -56,5 +57,4 @@ class Database:
   def add_song(self, track):
     """ add url to db """
     with dbconn(feeds_db) as c:
-      song = c.execute("INSERT OR IGNORE INTO songs (url) VALUES(?)", (track,))
-
+      c.execute("INSERT OR IGNORE INTO songs (url) VALUES(?)", (track,))

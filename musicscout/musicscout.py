@@ -14,15 +14,13 @@
   - add url to metadata?
 """
 
+import datetime
 import os
 import re
-import shutil
-import sys
-import time
+from time import mktime
+
 
 from bs4 import BeautifulSoup
-import configparser
-import datetime
 import feedparser
 import requests
 from slugify import slugify
@@ -30,8 +28,6 @@ import youtube_dl
 
 from config import Config
 import db
-from messages import Messages
-from mpd import MPDQueue
 from utils import Utils
 
 c = Config().conf_vars()
@@ -58,55 +54,55 @@ class Musicscout():
       except:
         genre = 'uncategorized'
       if line[0]:
-        feed = line[0]
-        d.add_url(feed.strip())
+        feed = line[0].strip()
+        d.add_url(feed)
         feeds += [[feed,genre]]
         self.get_media_links(feed, genre)
         timestamp = datetime.datetime.now()
-        d.updated(feed,timestamp)
+        d.update_time(feed,timestamp)
     feedfile.close()
     return feeds
 
   def get_media_links(self, feed, genre):
     """ get posts for a feed, strip media links  """
-    feed_date = d.update_time(feed)
-    print("Date: ".format(feed_date))
+    last_update = d.feed_time(feed)[0]
+    lu = None
     posts = feedparser.parse(feed)
-    for p in posts.entries:
-      print(p['updated'])
-    genre_dir = Config().build_dirs(os.path.join(c['cache_dir'], genre))
     media_sites = ['youtu', 'bandcamp', 'soundcloud', 'redditmedia']
+
     for p in posts.entries:
-      print(feed)
-      try:
-        r = BeautifulSoup(requests.get(p.link).content, 'lxml')
-        frames = r.find_all('iframe')
-        for f in frames:
-          try:
-            print("LINK: {}".format(f))
-            if 'bandcamp' in f['src']:
-              fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
-              f_link = fl.group(1)
-              link = f_link
-            else:
-              link = f['src']
-              f_link = ut.format_link(link) 
-            check_song = d.check_song(f_link)
-            print("URL {}".format(f_link))
-            if not check_song and any(m in f_link for m in media_sites):
-              print("Downloading: {} ".format(link))
-              self.yt_dl(link,genre)
-              add_song = d.add_song(f_link)
-            else:
-              print("Did not dl: {} ".format(f_link))
-          except:
-            print("Non-working link: {}".format(f))
-            pass
-      except:
-        pass
+      pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
+      if last_update:
+        lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S.%f')
+      if not lu or pt > lu:
+        try:
+          r = BeautifulSoup(requests.get(p.link).content, 'lxml')
+          frames = r.find_all('iframe')
+          for f in frames:
+            try:
+              print("LINK: {}".format(f))
+              if 'bandcamp' in f['src']:
+                fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
+                f_link = fl.group(1)
+                link = f_link
+              else:
+                link = f['src']
+                f_link = ut.format_link(link)
+              check_song = d.check_song(f_link)
+              print("URL {}".format(f_link))
+              if not check_song and any(m in f_link for m in media_sites):
+                print("Downloading: {} ".format(link))
+                self.yt_dl(link,genre)
+                add_song = d.add_song(f_link)
+              else: #Already in db or not a media embed
+                print("Did not dl: {} ".format(f_link))
+            except: #Non-working link
+              pass
+        except:
+          pass
 
   def yt_dl(self, link, genre):
-    genre_dir = os.path.join(c['cache_dir'],genre) 
+    genre_dir = os.path.join(c['cache_dir'],genre)
     ydl_opts = {
         'outtmpl' : genre_dir+'/%(title)s_%(id)s.%(ext)s',
         'format': 'bestaudio/best',
