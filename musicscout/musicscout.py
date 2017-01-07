@@ -88,7 +88,6 @@ class Musicscout():
                 if not check_song and any(m in f_link for m in media_sites):
                   self.yt_dl(link,genre)
                   add_song = d.add_song(f_link)
-                else: #Already in db or not a media embed
               except: #Non-working link
                 pass
           except:
