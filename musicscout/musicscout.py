@@ -9,7 +9,7 @@
 import datetime
 import os
 import re
-from time import mktime
+from time import mktime,sleep
 
 
 from bs4 import BeautifulSoup
@@ -49,9 +49,8 @@ class Musicscout():
         feed = line[0].strip()
         d.add_url(feed)
         feeds += [[feed,genre]]
-        self.get_media_links(feed, genre)
-        timestamp = datetime.datetime.now()
-        d.update_time(feed,timestamp)
+        ft = self.get_media_links(feed, genre)
+        d.update_time(feed,ft)
     feedfile.close()
     return feeds
 
@@ -62,19 +61,24 @@ class Musicscout():
     posts = feedparser.parse(feed)
     media_sites = ['youtu', 'bandcamp', 'soundcloud', 'redditmedia']
     if last_update:
-      lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S.%f')
+      lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
     try:
       ft = datetime.datetime.fromtimestamp(mktime(posts.modified_parsed))
     except:
       ft = None
     if not lu or not ft or ft > lu:
-      print("checking posts for {}".format(feed))
       for p in posts.entries:
         pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
         if not lu or pt > lu:
+          if ft == None or pt > ft:
+            ft = pt
           try:
+            sleep(2)
+            print(p.link)
             r = BeautifulSoup(requests.get(p.link).content, 'lxml')
+            print(r)
             frames = r.find_all('iframe')
+            print(frames)
             for f in frames:
               try:
                 if 'bandcamp' in f['src']:
@@ -90,8 +94,9 @@ class Musicscout():
                   add_song = d.add_song(f_link)
               except: #Non-working link
                 pass
-          except:
-            pass
+          except requests.exceptions.RequestException as e:  # This is the correct syntax
+            print(e)
+    return ft
 
   def yt_dl(self, link, genre):
     genre_dir = os.path.join(c['cache_dir'],genre)
