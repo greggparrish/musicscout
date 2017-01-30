@@ -15,7 +15,6 @@ from time import mktime,sleep
 from bs4 import BeautifulSoup
 import feedparser
 import requests
-from slugify import slugify
 import youtube_dl
 
 from config import Config
@@ -42,7 +41,7 @@ class Musicscout():
       line = line.replace('\n','').strip()
       line = line.split('|')
       try:
-        genre = slugify(line[1])
+        genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '',line[1]).strip().lower()))
       except:
         genre = 'uncategorized'
       if line[0]:
@@ -55,6 +54,7 @@ class Musicscout():
     return feeds
 
   def get_media_links(self, feed, genre):
+    print("checking posts for {}".format(feed))
     """ get posts for a feed, strip media links  """
     last_update = d.feed_time(feed)[0]
     lu = None
@@ -73,12 +73,9 @@ class Musicscout():
           if ft == None or pt > ft:
             ft = pt
           try:
-            sleep(2)
-            print(p.link)
+            sleep(3)
             r = BeautifulSoup(requests.get(p.link).content, 'lxml')
-            print(r)
             frames = r.find_all('iframe')
-            print(frames)
             for f in frames:
               try:
                 if 'bandcamp' in f['src']:
