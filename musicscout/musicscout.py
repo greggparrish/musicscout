@@ -20,6 +20,7 @@ import youtube_dl
 from config import Config
 import db
 from utils import Utils
+from mpdutil import mpd_update
 
 c = Config().conf_vars()
 d = db.Database()
@@ -114,4 +115,5 @@ class Musicscout():
         pass
 
 ms = Musicscout()
-feeds = ms.get_urls()
+ms.get_urls()
+mpd_update()
