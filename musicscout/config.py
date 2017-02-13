@@ -33,7 +33,7 @@ class Config(object):
     print("No config file found at ~/.config/musicscout, using default settings. Creating file with defaults.")
     path = self.format_path(os.path.join(ConfigPath,'config'))
     conf.add_section("storage")
-    conf.set("storage", "cache", "~/.config/musicscout/cache")
+    conf.set("storage", "cache", "~/.config/musicscout/musicscout_cache")
     conf.set("storage", "urls", "~/.config/musicscout/urls")
     conf.add_section("player")
     conf.set("player", "player", "mpd")
