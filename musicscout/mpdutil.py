@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+import os
 
 from mpd import MPDClient
 from config import Config
@@ -26,3 +27,15 @@ def mpd_update():
   rel_path = c['cache_dir'].split('/')[-1]
   with MPDConn(c['mpd_host'],c['mpd_port']) as m:
     m.update(rel_path)
+
+def make_playlists():
+  cachedir = c['cache_dir']
+  with MPDConn(c['mpd_host'],c['mpd_port']) as m:
+    for g in list(os.walk(cachedir))[1:]:
+      genre = g[0].split('/')[-1]
+      playlist = "musicscout_{}".format(genre)
+      m.playlistadd(playlist, '')
+      m.playlistclear(playlist)
+      for s in g[2]:
+        song = os.path.join(cachedir.split('/')[-1],genre,s)
+        m.playlistadd(playlist,song)

@@ -20,3 +20,4 @@ files/
 *.swp
 
 musicscout/scraps
+musicscout/times.py

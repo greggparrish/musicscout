@@ -20,7 +20,7 @@ import youtube_dl
 from config import Config
 import db
 from utils import Utils
-from mpdutil import mpd_update
+from mpdutil import mpd_update, make_playlists
 
 c = Config().conf_vars()
 d = db.Database()
@@ -39,18 +39,20 @@ class Musicscout():
     feeds = []
     feedfile = open(ConfigPath+'urls')
     for line in feedfile:
-      line = line.replace('\n','').strip()
-      line = line.split('|')
-      try:
-        genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '',line[1]).strip().lower()))
-      except:
-        genre = 'uncategorized'
-      if line[0]:
-        feed = line[0].strip()
-        d.add_url(feed)
-        feeds += [[feed,genre]]
-        ft = self.get_media_links(feed, genre)
-        d.update_time(feed,ft)
+      line=line.strip()    
+      if not line.startswith("#"):
+        line = line.replace('\n','').strip()
+        line = line.split('|')
+        try:
+          genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '',line[1]).strip().lower()))
+        except:
+          genre = 'uncategorized'
+        if line[0]:
+          feed = line[0].strip()
+          d.add_url(feed)
+          feeds += [[feed,genre]]
+          ft = self.get_media_links(feed, genre)
+          d.update_time(feed,ft)
     feedfile.close()
     return feeds
 
@@ -64,7 +66,7 @@ class Musicscout():
     if last_update:
       lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
     try:
-      ft = datetime.datetime.fromtimestamp(mktime(posts.modified_parsed))
+      ft = datetime.datetime.fromtimestamp(mktime(posts.feed.updated_parsed))
     except:
       ft = None
     if not lu or not ft or ft > lu:
@@ -117,3 +119,4 @@ class Musicscout():
 ms = Musicscout()
 ms.get_urls()
 mpd_update()
+make_playlists()
