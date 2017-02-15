@@ -9,4 +9,4 @@ pyparsing==2.1.10
 python-mpd2==0.5.5
 requests==2.13.0
 six==1.10.0
-youtube-dl==2017.1.31
+youtube-dl==2017.2.16
