@@ -30,6 +30,12 @@ class Utils:
       os.makedirs(path)
     return path
 
+  def clean_cache(self):
+    for root, subFolders, files in os.walk(cf['cache_dir']):
+      for file in files:
+        if '.part' in file:
+          os.remove(os.path.join(root,file))
+
   def format_link(self,link):
     if 'recaptcha' or 'widgets.wp.com' in link:
       fl = False

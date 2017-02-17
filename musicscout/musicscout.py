@@ -101,7 +101,7 @@ class Musicscout():
   def yt_dl(self, link, genre):
     genre_dir = os.path.join(c['cache_dir'],genre)
     ydl_opts = {
-        'outtmpl' : genre_dir+'/%(title)s_%(id)s.%(ext)s',
+        'outtmpl' : genre_dir+'/%(title)s__%(id)s.%(ext)s',
         'format': 'bestaudio/best',
         'max-downloads': '3',
         'postprocessors': [{
@@ -118,5 +118,6 @@ class Musicscout():
 
 ms = Musicscout()
 ms.get_urls()
+ut.clean_cache()
 mpd_update()
 make_playlists()
