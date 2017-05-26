@@ -30,7 +30,6 @@ ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 class Musicscout():
   def __init__(self):
     ut.symlink_musicdir()
-    #ut.clear_cache()
 
   def get_urls(self):
     """
@@ -62,40 +61,33 @@ class Musicscout():
     last_update = d.feed_time(feed)[0]
     lu = None
     posts = feedparser.parse(feed)
-    media_sites = ['youtu', 'bandcamp', 'soundcloud', 'redditmedia']
+
     if last_update:
       lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
     try:
       ft = datetime.datetime.fromtimestamp(mktime(posts.feed.updated_parsed))
     except:
       ft = None
+
     if not lu or not ft or ft > lu:
       for p in posts.entries:
         pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
-        if not lu or pt > lu:
-          if ft == None or pt > ft:
-            ft = pt
-          try:
-            sleep(3)
-            r = BeautifulSoup(requests.get(p.link).content, 'lxml')
-            frames = r.find_all('iframe')
-            for f in frames:
-              try:
-                if 'bandcamp' in f['src']:
-                  fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
-                  f_link = fl.group(1)
-                  link = f_link
-                else:
-                  link = f['src']
-                  f_link = ut.format_link(link)
-                check_song = d.check_song(f_link)
-                if not check_song and any(m in f_link for m in media_sites):
-                  self.yt_dl(link,genre)
-                  add_song = d.add_song(f_link)
-              except: #Non-working link
-                pass
-          except requests.exceptions.RequestException as e:  # This is the correct syntax
-            print(e)
+        if ft == None or pt > ft:
+          ft = pt
+
+        if 'reddit' in feed:
+          links = ut.reddit_links(p)
+        elif 'tumblr' in feed:
+          links = ut.tumblr_links(p)
+        else:
+          links = ut.blog_links(p)
+
+        for l in links:
+          check_song = d.check_song(l)
+          media_sites = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
+          if not check_song and any(m in l for m in media_sites):
+            self.yt_dl(l,genre)
+            add_song = d.add_song(l)
     return ft
 
   def yt_dl(self, link, genre):
@@ -103,7 +95,7 @@ class Musicscout():
     ydl_opts = {
         'outtmpl' : genre_dir+'/%(title)s__%(id)s.%(ext)s',
         'format': 'bestaudio/best',
-        'max-downloads': '3',
+        'max_downloads': '3',
         'postprocessors': [{
           'key': 'FFmpegExtractAudio',
           'preferredcodec': 'mp3',

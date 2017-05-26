@@ -47,3 +47,39 @@ class Utils:
       fl = "https:"+link
     return fl.strip()
 
+  def reddit_links(self, p):
+    links = []
+    media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
+    ll = BeautifulSoup(p['content'][0]['value'], 'lxml')
+    for l in ll.find_all('a'):
+      if any(m in l.get('href') for m in media_sites):
+        links.append(l.get('href'))
+    return links
+
+  def tumblr_links(self, p):
+    links = []
+    r = BeautifulSoup(p['summary'], 'lxml')
+    frames = r.find_all('iframe')
+    for f in frames:
+      src = f.get('src')
+      if src:
+        links.append(f.get('src'))
+    return links
+
+  def blog_links(self, p):
+    links = []
+    r = BeautifulSoup(requests.get(p.link).content, 'lxml')
+    media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
+    frames = r.find_all('iframe')
+    for f in frames:
+      if any(m in f['src'] for m in media_sites):
+        try:
+          if 'bandcamp' in f['src']:
+            fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
+            if fl:
+              links.append(fl.group(1))
+          else:
+            links.append(self.format_link(f['src']))
+        except requests.exceptions.RequestException as e:
+          print(e)
+    return links
