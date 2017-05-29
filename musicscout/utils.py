@@ -7,6 +7,10 @@ import re
 import requests
 import time
 
+from mutagen import File
+from mutagen.id3 import ID3NoHeaderError
+from mutagen.easyid3 import EasyID3
+
 from config import Config
 import db
 from messages import Messages
@@ -72,7 +76,7 @@ class Utils:
     media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
     frames = r.find_all('iframe')
     for f in frames:
-      if any(m in f['src'] for m in media_sites):
+      if 'src' in f and any(m in f['src'] for m in media_sites):
         try:
           if 'bandcamp' in f['src']:
             fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
@@ -83,3 +87,27 @@ class Utils:
         except requests.exceptions.RequestException as e:
           print(e)
     return links
+
+  def add_metadata(self, path, link, genre):
+    fn = path.split('/')[-1]
+    vi = fn.split('__')[0]
+    vidinfo = re.sub("[\(\[].*?[\)\]]", "", vi)
+    if '-' in vidinfo:
+      artist = vidinfo.split('-')[0]
+      fulltitle = vidinfo.split('-')[1]
+      title = fulltitle.split('__')[0]
+    else:
+      title = vidinfo
+      artist = ''
+    if '?' in link:
+      link = link.split('?')[0]
+    try:
+      song = EasyID3(path)
+    except ID3NoHeaderError:
+      song = File(path, easy=True)
+    song['title'] = title
+    song['artist'] = artist
+    song['genre'] = genre
+    song['website'] = link
+    song.save()
+

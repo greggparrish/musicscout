@@ -36,5 +36,8 @@ def make_playlists():
       playlist = "musicscout_{}".format(genre)
       m.playlistclear(playlist)
       for s in g[2]:
-        song = os.path.join(cachedir.split('/')[-1],genre,s)
-        m.playlistadd(playlist,song)
+        try:
+          song = os.path.join(cachedir.split('/')[-1],genre,s)
+          m.playlistadd(playlist,song)
+        except:
+          pass
