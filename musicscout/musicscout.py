@@ -53,8 +53,6 @@ class Musicscout():
           ft = self.get_media_links(feed, genre)
           d.update_time(feed,ft)
     feedfile.close()
-    sleep(10)
-    make_playlists()
     return feeds
 
   def get_media_links(self, feed, genre):
@@ -78,7 +76,6 @@ class Musicscout():
         ''' IF INDIVIDUAL POST IS NEWER THAN LAST UPDATE '''
         if ft == None or pt > ft:
           ft = pt
-
         if 'reddit' in feed:
           links = ut.reddit_links(p)
         elif 'tumblr' in feed:
@@ -104,6 +101,8 @@ class Musicscout():
         'format': 'bestaudio/best',
         'get_filename': True,
         'max_downloads': '3',
+        'quiet': True,
+        'no_warnings': True,
         'postprocessors': [{
           'key': 'FFmpegExtractAudio',
           'preferredcodec': 'mp3',
@@ -116,6 +115,7 @@ class Musicscout():
         filename = ydl.prepare_filename(vidinfo)
         base = '.'.join(filename.split('.')[:-1])
         filename = "{}.mp3".format(base)
+        print("  **  Downloading {} from {}".format(vidinfo.get('title', None), link))
       except:
         filename = ''
         print("Unable to download {}".format(link))
@@ -125,3 +125,5 @@ ms = Musicscout()
 ms.get_urls()
 ut.clean_cache()
 mpd_update()
+sleep(10)
+make_playlists()

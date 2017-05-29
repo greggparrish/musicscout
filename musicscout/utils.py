@@ -76,7 +76,7 @@ class Utils:
     media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
     frames = r.find_all('iframe')
     for f in frames:
-      if 'src' in f and any(m in f['src'] for m in media_sites):
+      if f.has_attr('src') and any(m in f['src'] for m in media_sites):
         try:
           if 'bandcamp' in f['src']:
             fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
