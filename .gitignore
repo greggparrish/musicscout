@@ -18,6 +18,7 @@ files/
 *.pyc
 *.db
 *.swp
+debug.py
 
 musicscout/scraps
 musicscout/times.py
