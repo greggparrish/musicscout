@@ -41,14 +41,22 @@ class Utils:
           os.remove(os.path.join(root,file))
 
   def format_link(self,link):
-    if 'recaptcha' or 'widgets.wp.com' in link:
+    if 'recaptcha' in link or 'widgets.wp.com' in link:
       fl = False
-    if 'youtu' in link:
+    elif 'youtu' in link:
       fl = link.split('?')[0]
-    if 'soundcloud' in link:
-      fl = link.split('&')[0]
-    if 'redditmedia' in link:
+    elif 'soundcloud' in link:
+      fl = "https://api{}".format(link.split('api')[1].replace('%2F','/'))
+    elif 'redditmedia' in link:
       fl = "https:"+link
+    elif 'bandcamp' in link:
+      if 'EmbeddedPlayer' in link:
+       player = BeautifulSoup(requests.get(link).content, 'lxml')
+       fl = player.find('input', { "id" : "shareurl" } ).get('value')
+      else:
+        fl = re.search(r'href=[\'"]?([^\'" >]+)', str(link))
+    else:
+      fl = fl
     return fl.strip()
 
   def reddit_links(self, p):
@@ -78,12 +86,7 @@ class Utils:
     for f in frames:
       if f.has_attr('src') and any(m in f['src'] for m in media_sites):
         try:
-          if 'bandcamp' in f['src']:
-            fl = re.search(r'href=[\'"]?([^\'" >]+)', str(f))
-            if fl:
-              links.append(fl.group(1))
-          else:
-            links.append(self.format_link(f['src']))
+          links.append(self.format_link(f['src']))
         except requests.exceptions.RequestException as e:
           print(e)
     return links
