@@ -50,9 +50,11 @@ class Utils:
     elif 'redditmedia' in link:
       fl = "https:"+link
     elif 'bandcamp' in link:
-      if 'EmbeddedPlayer' in link:
-       player = BeautifulSoup(requests.get(link).content, 'lxml')
-       fl = player.find('input', { "id" : "shareurl" } ).get('value')
+      if 'EmbeddedPlayer' in link or 'VideoEmbed' in link:
+       if 'http' not in link:
+         link = 'https:'+link
+       player = BeautifulSoup(requests.get(link, headers={ "user-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36" }).content, 'lxml')
+       fl = player.find('a', { 'class' : 'logo' } ).get('href')
       else:
         fl = re.search(r'href=[\'"]?([^\'" >]+)', str(link))
     else:
@@ -92,25 +94,26 @@ class Utils:
     return links
 
   def add_metadata(self, path, link, genre):
-    fn = path.split('/')[-1]
-    vi = fn.split('__')[0]
-    vidinfo = re.sub("[\(\[].*?[\)\]]", "", vi)
-    if '-' in vidinfo:
-      artist = vidinfo.split('-')[0]
-      fulltitle = vidinfo.split('-')[1]
-      title = fulltitle.split('__')[0]
-    else:
-      title = vidinfo
-      artist = ''
-    if '?' in link:
-      link = link.split('?')[0]
-    try:
-      song = EasyID3(path)
-    except ID3NoHeaderError:
-      song = File(path, easy=True)
-    song['title'] = title
-    song['artist'] = artist
-    song['genre'] = genre
-    song['website'] = link
-    song.save()
+    if os.path.isfile(path): 
+      fn = path.split('/')[-1]
+      vi = fn.split('__')[0]
+      vidinfo = re.sub("[\(\[].*?[\)\]]", "", vi)
+      if '-' in vidinfo:
+        artist = vidinfo.split('-')[0]
+        fulltitle = vidinfo.split('-')[1]
+        title = fulltitle.split('__')[0]
+      else:
+        title = vidinfo
+        artist = ''
+      if '?' in link:
+        link = link.split('?')[0]
+      try:
+        song = EasyID3(path)
+      except ID3NoHeaderError:
+        song = File(path, easy=True)
+      song['title'] = title
+      song['artist'] = artist
+      song['genre'] = genre
+      song['website'] = link
+      song.save()
 

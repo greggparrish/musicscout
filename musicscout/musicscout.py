@@ -70,27 +70,28 @@ class Musicscout():
       ft = None
 
     ''' IF FEED HAS BEEN UPDATED SINCE LAST CHECK '''
+
     if not lu or not ft or ft > lu:
       for p in posts.entries:
         pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
         ''' IF INDIVIDUAL POST IS NEWER THAN LAST UPDATE '''
-        if ft == None or pt > ft:
-          ft = pt
-        if 'reddit' in feed:
-          links = ut.reddit_links(p)
-        elif 'tumblr' in feed:
-          links = ut.tumblr_links(p)
-        else:
-          links = ut.blog_links(p)
+        if ft == None or pt > lu:
+          if 'reddit' in feed:
+            links = ut.reddit_links(p)
+          elif 'tumblr' in feed:
+            links = ut.tumblr_links(p)
+          else:
+            links = ut.blog_links(p)
+          for l in links:
+            check_song = d.check_song(l)
+            media_sites = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
+            if not check_song and any(m in l for m in media_sites):
+              dl = self.yt_dl(l,genre)
+              if 'youtu' in l and dl != '':
+                ut.add_metadata(dl, l, genre)
+              add_song = d.add_song(l)
 
-        for l in links:
-          check_song = d.check_song(l)
-          media_sites = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
-          if not check_song and any(m in l for m in media_sites):
-            dl = self.yt_dl(l,genre)
-            if 'youtu' in l and dl != '':
-              ut.add_metadata(dl, l, genre)
-            add_song = d.add_song(l)
+    ft = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     return ft
 
   def yt_dl(self, link, genre):
@@ -115,7 +116,7 @@ class Musicscout():
         filename = ydl.prepare_filename(vidinfo)
         base = '.'.join(filename.split('.')[:-1])
         filename = "{}.mp3".format(base)
-        print("  **  Downloading {} from {}".format(vidinfo.get('title', None), link))
+        print("  ** DOWNLOADING: {} from {}".format(vidinfo.get('title', None), link))
       except:
         filename = ''
         print("Unable to download {}".format(link))
