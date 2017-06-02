@@ -46,7 +46,10 @@ class Utils:
     elif 'youtu' in link:
       fl = link.split('?')[0]
     elif 'soundcloud' in link:
-      fl = "https://api{}".format(link.split('api')[1].replace('%2F','/'))
+      if 'player/?url' in link:
+        fl = "https:".format(re.search(r'%3A(.*?)\&', link).group(1).replace('%2F','/'))
+      else:
+        fl = "https://api{}".format(link.split('api')[1].replace('%2F','/'))
     elif 'redditmedia' in link:
       fl = "https:"+link
     elif 'bandcamp' in link:
