@@ -75,7 +75,7 @@ class Musicscout():
       for p in posts.entries:
         pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
         ''' IF INDIVIDUAL POST IS NEWER THAN LAST UPDATE '''
-        if ft == None or pt > lu:
+        if ft == None or lu == None or pt > lu:
           if 'reddit' in feed:
             links = ut.reddit_links(p)
           elif 'tumblr' in feed:
