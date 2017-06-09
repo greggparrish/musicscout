@@ -22,9 +22,11 @@ INSTALL
 CONFIG
 ------
 - config file: ~/.config/musicscout/config
-- set cache (dir for mp3s), default: ~/,config/musicscout/musicscout_cache
-- set url file: url | genre (see example in repo)
+- set cache (dir for mp3s), default: ~/.config/musicscout/musicscout_cache
+- set url file: url | genre (see example_ in repo)
 - set mpd host, port, and music directory
+
+.. _example: https://github.com/greggparrish/musicscout/blob/master/urls_example
 
 USAGE
 -----
