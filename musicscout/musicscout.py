@@ -9,10 +9,9 @@
 import datetime
 import os
 import re
-from time import mktime,sleep
+from time import mktime, sleep
 
 
-from bs4 import BeautifulSoup
 import feedparser
 import requests
 import youtube_dl
@@ -27,9 +26,11 @@ d = db.Database()
 ut = Utils()
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 
+
 class Musicscout():
   def __init__(self):
     ut.symlink_musicdir()
+
 
   def get_urls(self):
     """
@@ -38,9 +39,9 @@ class Musicscout():
     feeds = []
     feedfile = open(ConfigPath+'urls')
     for line in feedfile:
-      line=line.strip()
+      line = line.strip()
       if not line.startswith("#"):
-        line = line.replace('\n','').strip()
+        line = line.replace('\n', '').strip()
         line = line.split('|')
         try:
           genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '',line[1]).strip().lower()))

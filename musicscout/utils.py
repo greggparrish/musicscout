@@ -47,7 +47,7 @@ class Utils:
       fl = link.split('?')[0]
     elif 'soundcloud' in link:
       if 'player/?url' in link:
-        fl = "https:{}".format(re.search(r'%3A(.*?)\&', link).group(1).replace('%2F','/'))
+        fl = "https{}".format(re.search(r'https(.*?)\&', link).group(1).replace('%2F','/'))
       else:
         fl = "https://api{}".format(link.split('api')[1].replace('%2F','/'))
     elif 'redditmedia' in link:
@@ -85,19 +85,21 @@ class Utils:
 
   def blog_links(self, p):
     links = []
-    r = BeautifulSoup(requests.get(p.link).content, 'lxml')
-    media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
-    frames = r.find_all('iframe')
-    for f in frames:
-      if f.has_attr('src') and any(m in f['src'] for m in media_sites):
-        try:
+    r = False
+    try:
+      r = BeautifulSoup(requests.get(p.link).content, 'lxml')
+    except requests.exceptions.RequestException as e:
+      print(e)
+    if r != False:
+      media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
+      frames = r.find_all('iframe')
+      for f in frames:
+        if f.has_attr('src') and any(m in f['src'] for m in media_sites):
           links.append(self.format_link(f['src']))
-        except requests.exceptions.RequestException as e:
-          print(e)
     return links
 
   def add_metadata(self, path, link, genre):
-    if os.path.isfile(path): 
+    if os.path.isfile(path):
       fn = path.split('/')[-1]
       vi = fn.split('__')[0]
       vidinfo = re.sub("[\(\[].*?[\)\]]", "", vi)

@@ -1,5 +1,7 @@
 ## format: url | genre
+
 ## feeds without genre will be added as 'uncategorized'
+## works with any rss feed: blog, tumblr, Reddit, google news, etc.
 
 http://www.post-punk.com/feed/ | postpunk
 https://theblogginggoth.com/feed/ | postpunk
@@ -17,7 +19,6 @@ https://heathenharvest.org/category/music-reviews/folk/neofolk/feed/ | postpunk
 
 https://www.reddit.com/r/goth.rss | postpunk 
 https://www.reddit.com/r/postpunk.rss | postpunk 
-https://www.reddit.com/r/neofolk.rss | postpunk
 https://www.reddit.com/r/releasethebats.rss | postpunk
 https://www.reddit.com/r/postpunk.rss | postpunk
 https://www.reddit.com/r/deathrock.rss | postpunk
@@ -30,4 +31,15 @@ https://news.google.com/news?q="goth music"&output=rss&num=20 | postpunk
 https://news.google.com/news?q="gothic music"&output=rss&num=20 | postpunk
 
 
+http://feeds.feedblitz.com/musicfog | americana
+http://twangville.com/feed/ | americana
+http://www.texasmusictimes.com/texasmusictimes.xml | americana
+http://www.thealternateroot.com/?format=feed&type=rss | americana
+https://americanamusicshow.com/feed/ | americana
+https://fiddlefreak.com/feed/ | americana 
+https://grassclippingsblog.com/feed | americana
+https://posttowire.com/feed/ | americana
+https://timberandsteel.wordpress.com/feed | americana
+https://www.reddit.com/r/altcountry.rss | americana
+https://www.reddit.com/r/americana.rss | americana
 
