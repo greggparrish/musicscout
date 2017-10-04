@@ -1,19 +1,13 @@
 #!/usr/bin/python3
 
-"""
-  TODO:
-  - download media if < 10 min
-  - log
-"""
-
 import datetime
+import logging
 import os
 import re
 from time import mktime, sleep
 
 
 import feedparser
-import requests
 import youtube_dl
 
 from config import Config
@@ -25,10 +19,13 @@ c = Config().conf_vars()
 d = db.Database()
 ut = Utils()
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
+logging.basicConfig(filename=ConfigPath+'scout.log', format='%(message)s', level=logging.INFO)
+dlcount = 0
 
 
 class Musicscout():
   def __init__(self):
+    self.dlcount = 0
     ut.symlink_musicdir()
 
 
@@ -36,6 +33,7 @@ class Musicscout():
     """
     Open urls file in .config, make list
     """
+    logging.info("\n### INIT: SCOUT RUN ON: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
     feeds = []
     feedfile = open(ConfigPath+'urls')
     for line in feedfile:
@@ -75,6 +73,7 @@ class Musicscout():
     if not lu or not ft or ft > lu:
       for p in posts.entries:
         pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
+
         ''' IF INDIVIDUAL POST IS NEWER THAN LAST UPDATE '''
         if ft == None or lu == None or pt > lu:
           if 'reddit' in feed:
@@ -89,7 +88,9 @@ class Musicscout():
             if not check_song and any(m in l for m in media_sites):
               dl = self.yt_dl(l,genre)
               if 'youtu' in l and dl != '':
+                logging.info("    ** DL: {} from {}".format(dl.split('/')[-1],l))
                 ut.add_metadata(dl, l, genre)
+                self.dlcount += 1
               add_song = d.add_song(l)
 
     ft = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -117,10 +118,12 @@ class Musicscout():
         filename = ydl.prepare_filename(vidinfo)
         base = '.'.join(filename.split('.')[:-1])
         filename = "{}.mp3".format(base)
-        print("  ** DOWNLOADING: {} from {}".format(vidinfo.get('title', None), link))
+        vidtitle = vidinfo.get('title', None)
+        print("DL: {}".format(link))
       except:
         filename = ''
         print("Unable to download {}".format(link))
+        logging.info("    ** FAIL:  Unable to download: {}".format(link))
     return filename
 
 ms = Musicscout()
@@ -129,3 +132,5 @@ ut.clean_cache()
 mpd_update()
 sleep(10)
 make_playlists()
+logging.info("### DL TOTAL: {}".format(ms.dlcount))
+logging.info("### END: SCOUT RUN ON: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))

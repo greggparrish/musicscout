@@ -16,6 +16,7 @@ import db
 from messages import Messages
 
 cf = Config().conf_vars()
+media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
 
 class Utils:
   def symlink_musicdir(self):
@@ -66,7 +67,6 @@ class Utils:
 
   def reddit_links(self, p):
     links = []
-    media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
     ll = BeautifulSoup(p['content'][0]['value'], 'lxml')
     for l in ll.find_all('a'):
       if any(m in l.get('href') for m in media_sites):
@@ -91,7 +91,6 @@ class Utils:
     except requests.exceptions.RequestException as e:
       print(e)
     if r != False:
-      media_sites = ['youtu', 'bandcamp.com', 'soundcloud']
       frames = r.find_all('iframe')
       for f in frames:
         if f.has_attr('src') and any(m in f['src'] for m in media_sites):

@@ -1,10 +1,13 @@
 #!/usr/bin/python3
+import logging
 import os
 
 from mpd import MPDClient
 from config import Config
 
 c = Config().conf_vars()
+logging.getLogger("mpd").setLevel(logging.WARNING)
+
 
 class MPDConn(object):
   def __init__(self, host, path):
