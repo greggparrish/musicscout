@@ -16,121 +16,140 @@ from utils import Utils
 from mpdutil import mpd_update, make_playlists
 
 c = Config().conf_vars()
-d = db.Database()
+db = db.Database()
 ut = Utils()
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
-logging.basicConfig(filename=ConfigPath+'scout.log', format='%(message)s', level=logging.INFO)
-dlcount = 0
+logging.basicConfig( filename=ConfigPath + 'scout.log', format='%(message)s', level=logging.INFO)
+
 
 
 class Musicscout():
-  def __init__(self):
-    self.dlcount = 0
-    ut.symlink_musicdir()
+    def __init__(self):
+        self.dlcount = 0
 
+    def __enter__(self):
+        ''' Symlink download dir to mpd dir if not already, start log '''
+        ut.symlink_musicdir()
+        logging.info("\n### INIT: SCOUT RUN ON: {}".format(
+            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        return self
 
-  def get_urls(self):
-    """
-    Open urls file in .config, make list
-    """
-    logging.info("\n### INIT: SCOUT RUN ON: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
-    feeds = []
-    feedfile = open(ConfigPath+'urls')
-    for line in feedfile:
-      line = line.strip()
-      if not line.startswith("#"):
-        line = line.replace('\n', '').strip()
-        line = line.split('|')
+    def __exit__(self, exc_class, exc, traceback):
+        ''' Rm partial dls, update mpd, build playlists, end log '''
+        ut.clean_cache()
+        mpd_update()
+        sleep(10)
+        make_playlists()
+        logging.info("### DL TOTAL: {}".format(self.dlcount))
+        logging.info("### END: SCOUT RUN ON: {}".format( datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        return True
+
+    def _compare_feed_date(self, lu, posts):
+        ''' Check if site feed is newer than last scout run
+        to avoid unnecessary updates '''
         try:
-          genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '',line[1]).strip().lower()))
+            ft = datetime.datetime.fromtimestamp(mktime(posts.feed.updated_parsed))
+            if not lu or not ft or ft > lu:
+                return ft
+            else:
+                return False
         except:
-          genre = 'uncategorized'
-        if line[0]:
-          feed = line[0].strip()
-          d.add_url(feed)
-          feeds += [[feed,genre]]
-          ft = self.get_media_links(feed, genre)
-          d.update_time(feed,ft)
-    feedfile.close()
-    return feeds
+            return False
 
-  def get_media_links(self, feed, genre):
-    print("checking posts for {}".format(feed))
-    """ get posts for a feed, strip media links  """
-    last_update = d.feed_time(feed)[0]
-    lu = None
-    posts = feedparser.parse(feed)
+    def get_feed_urls(self):
+        ''' Open urls file in .config, make list of feeds '''
+        feeds = []
+        feedfile = open(ConfigPath + 'urls')
+        for line in feedfile:
+            line = line.strip()
+            if not line.startswith("#"):
+                line = line.replace('\n', '').strip()
+                line = line.split('|')
+                try:
+                    genre = re.sub( r'[-\s]+', '-', (re.sub( r'[^\w\s-]', '', line[1]).strip().lower()))
+                except:
+                    genre = 'uncategorized'
+                if line[0]:
+                    feed = line[0].strip()
+                    db.add_url(feed)
+                    feeds += [[feed, genre]]
+                    self.get_media_links(feed, genre)
+                    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    db.update_time(feed, now)
+        feedfile.close()
+        return True
 
-    if last_update:
-      lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
-    try:
-      ft = datetime.datetime.fromtimestamp(mktime(posts.feed.updated_parsed))
-    except:
-      ft = None
+    def get_media_links(self, feed, genre):
+        ''' Get posts for a feed, strip media links from posts '''
+        print("checking posts for {}".format(feed))
+        links = []
+        posts = feedparser.parse(feed)
+        last_update = db.feed_time(feed)[0]
+        if last_update != None:
+            try:
+                lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
+            except:
+                lu = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            lu = None
+        ft = self._compare_feed_date(lu, posts)
+        if ft != False:
+            for p in posts.entries:
+                pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
+                if ft is None or lu is None or pt > lu:
+                    if 'reddit' in feed:
+                        links = ut.reddit_links(p)
+                    elif 'tumblr' in feed:
+                        links = ut.tumblr_links(p)
+                    else:
+                        links = ut.blog_links(p)
+                    if links:
+                        self.download_new_media(links, genre)
+        return ft
 
-    ''' IF FEED HAS BEEN UPDATED SINCE LAST CHECK '''
-
-    if not lu or not ft or ft > lu:
-      for p in posts.entries:
-        pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
-
-        ''' IF INDIVIDUAL POST IS NEWER THAN LAST UPDATE '''
-        if ft == None or lu == None or pt > lu:
-          if 'reddit' in feed:
-            links = ut.reddit_links(p)
-          elif 'tumblr' in feed:
-            links = ut.tumblr_links(p)
-          else:
-            links = ut.blog_links(p)
-          for l in links:
-            check_song = d.check_song(l)
-            media_sites = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
+    def download_new_media(self, links, genre):
+        for l in links:
+            check_song = db.check_song(l)
+            media_sites = [ 'youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
             if not check_song and any(m in l for m in media_sites):
-              dl = self.yt_dl(l,genre)
-              if 'youtu' in l and dl != '':
-                logging.info("    ** DL: {} from {}".format(dl.split('/')[-1],l))
-                ut.add_metadata(dl, l, genre)
-                self.dlcount += 1
-              add_song = d.add_song(l)
+                dl = self.yt_dl(l, genre)
+                if 'youtu' in l and dl != False:
+                    ut.add_metadata(dl, l, genre)
+                    self.dlcount += 1
+                add_song = db.add_song(l)
+        return True
 
-    ft = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    return ft
-
-  def yt_dl(self, link, genre):
-    genre_dir = os.path.join(c['cache_dir'],genre)
-    ydl_opts = {
-        'restrict_filenames': True,
-        'outtmpl' : genre_dir+'/%(title)s__%(id)s.%(ext)s',
-        'format': 'bestaudio/best',
-        'get_filename': True,
-        'max_downloads': '3',
-        'quiet': True,
-        'no_warnings': True,
-        'postprocessors': [{
-          'key': 'FFmpegExtractAudio',
-          'preferredcodec': 'mp3',
-          'preferredquality': '192',
-          }],
+    def yt_dl(self, link, genre):
+        genre_dir = os.path.join(c['cache_dir'], genre)
+        ydl_opts = {
+            'restrict_filenames': True,
+            'outtmpl': genre_dir + '/%(title)s__%(id)s.%(ext)s',
+            'format': 'bestaudio/best',
+            'get_filename': True,
+            'max_downloads': '3',
+            'quiet': True,
+            'no_warnings': True,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
         }
-    with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-      try:
-        vidinfo = ydl.extract_info(link, download=True)
-        filename = ydl.prepare_filename(vidinfo)
-        base = '.'.join(filename.split('.')[:-1])
-        filename = "{}.mp3".format(base)
-        vidtitle = vidinfo.get('title', None)
-        print("DL: {}".format(link))
-      except:
-        filename = ''
-        print("Unable to download {}".format(link))
-        logging.info("    ** FAIL:  Unable to download: {}".format(link))
-    return filename
+        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
+            try:
+                vidinfo = ydl.extract_info(link, download=True)
+                filename = ydl.prepare_filename(vidinfo)
+                base = '.'.join(filename.split('.')[:-1])
+                filename = "{}.mp3".format(base)
+                vidtitle = vidinfo.get('title', None)
+                logging.info( "    ** DL: {} from {}".format(vidtitle, link))
+                print("  ** DL: {} from {}".format(vidtitle, link))
+                return filename
+            except:
+                logging.info( "    ** FAILED?: {}".format(link))
+                print("  ** FAILED?: {}".format(link))
+                return False
 
-ms = Musicscout()
-ms.get_urls()
-ut.clean_cache()
-mpd_update()
-sleep(10)
-make_playlists()
-logging.info("### DL TOTAL: {}".format(ms.dlcount))
-logging.info("### END: SCOUT RUN ON: {}".format(datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+if __name__ == '__main__':
+    with Musicscout() as ms:
+      ms.get_feed_urls()
