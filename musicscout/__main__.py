@@ -25,7 +25,11 @@ from docopt import docopt
 from musicscout import Musicscout
 
 
+
 if __name__ == '__main__':
     arguments = docopt(__doc__, version='musicscout 1.0')
-    with Musicscout() as ms:
-        ms.get_feed_urls()
+    try:
+        with Musicscout() as ms:
+            ms.get_feed_urls()
+    except Exception as e:
+        print('ERROR: {}'.format(e))

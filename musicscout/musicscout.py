@@ -20,7 +20,7 @@ db = db.Database()
 ut = Utils()
 ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 logging.basicConfig( filename=ConfigPath + 'scout.log', format='%(message)s', level=logging.INFO)
-
+media_sites = [ 'youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
 
 
 class Musicscout():
@@ -44,7 +44,7 @@ class Musicscout():
         logging.info("### END: SCOUT RUN ON: {}".format( datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
         return True
 
-    def _compare_feed_date(self, lu, posts):
+    def compare_feed_date(self, lu, posts):
         ''' Check if site feed is newer than last scout run
         to avoid unnecessary updates '''
         try:
@@ -81,7 +81,7 @@ class Musicscout():
 
     def get_media_links(self, feed, genre):
         ''' Get posts for a feed, strip media links from posts '''
-        print("checking posts for {}".format(feed))
+        print("  ** FEED: checking posts for {}".format(feed))
         links = []
         posts = feedparser.parse(feed)
         last_update = db.feed_time(feed)[0]
@@ -92,7 +92,7 @@ class Musicscout():
                 lu = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             lu = None
-        ft = self._compare_feed_date(lu, posts)
+        ft = self.compare_feed_date(lu, posts)
         if ft != False:
             for p in posts.entries:
                 pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
@@ -109,14 +109,14 @@ class Musicscout():
 
     def download_new_media(self, links, genre):
         for l in links:
-            check_song = db.check_song(l)
-            media_sites = [ 'youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
-            if not check_song and any(m in l for m in media_sites):
-                dl = self.yt_dl(l, genre)
-                if 'youtu' in l and dl != False:
-                    ut.add_metadata(dl, l, genre)
+            if any(m in l for m in media_sites):
+                check_song = db.check_song(l)
+                if not check_song:
+                    dl = self.yt_dl(l, genre)
+                    if 'youtu' in l and dl != False:
+                        ut.add_metadata(dl, l, genre)
+                    add_song = db.add_song(l)
                     self.dlcount += 1
-                add_song = db.add_song(l)
         return True
 
     def yt_dl(self, link, genre):
@@ -145,11 +145,14 @@ class Musicscout():
                 logging.info( "    ** DL: {} from {}".format(vidtitle, link))
                 print("  ** DL: {} from {}".format(vidtitle, link))
                 return filename
-            except:
-                logging.info( "    ** FAILED?: {}".format(link))
-                print("  ** FAILED?: {}".format(link))
+            except Exception as e:
+                logging.info( "    ** FAILED: {} {}".format(link, e))
+                print("  ** FAILED: {} {}".format(link, e))
                 return False
 
 if __name__ == '__main__':
-    with Musicscout() as ms:
-      ms.get_feed_urls()
+    try:
+        with Musicscout() as ms:
+            ms.get_feed_urls()
+    except Exception as e:
+        print('ERROR: {}'.format(e))

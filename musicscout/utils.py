@@ -86,25 +86,32 @@ class Utils:
         if 'EmbeddedPlayer' in link or 'VideoEmbed' in link:
             if 'http' not in link:
                 link = 'https:' + link
-            fl = re.search(r'href=[\'"]?([^\'" >]+)', str(embed)).groups()[0]
-        else:
-            fl = re.search(r'href=[\'"]?([^\'" >]+)', str(link)).groups()[0]
+            try:
+              fl = re.search(r'href=[\'"]?([^\'" >]+)', str(embed)).groups()[0]
+            except:
+              player = BeautifulSoup(requests.get(link, headers={ "user-agent": user_agent }).content, 'lxml')
+              try:
+                fl = player.find('a', { 'class' : 'logo' } ).get('href')
+              except:
+                fl = False
         return fl
 
     def blog_links(self, p):
         links = []
-        r = False
         try:
             r = BeautifulSoup( requests.get( p.link, headers={ "user-agent": user_agent}).content, 'lxml')
         except requests.exceptions.RequestException as e:
             print(e)
-        if r != False:
+        if r in locals():
             frames = r.find_all('iframe')
             for f in frames:
-                if 'bandcamp' in f['src']:
-                    links.append(self.bandcamp_embed(f['src'], f))
-                elif f.has_attr('src') and any( m in f['src'] for m in media_sites):
-                    links.append(self.format_link(f['src']))
+                if f.has_attr('src'):
+                    if 'bandcamp' in f['src']:
+                        bfl = self.bandcamp_embed(f['src'], f)
+                        if bfl != False:
+                          links.append(bfl)
+                    elif any( m in f['src'] for m in media_sites):
+                        links.append(self.format_link(f['src']))
         return links
 
     def add_metadata(self, path, link, genre):
