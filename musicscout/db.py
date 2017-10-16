@@ -1,14 +1,12 @@
-#!/usr/bin/python3
-
 import datetime
 import sqlite3
 import os
 
-config_path = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
-feeds_db = os.path.join(config_path, 'feeds.db')
+CONFIGPATH = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
+FEEDS_DB = os.path.join(CONFIGPATH, 'feeds.db')
 
 
-class dbconn(object):
+class dbconn:
     """ DB context manager """
 
     def __init__(self, path):
@@ -31,7 +29,7 @@ class Database:
         self._create_table()
 
     def _create_table(self):
-        with dbconn(feeds_db) as c:
+        with dbconn(FEEDS_DB) as c:
             c.execute(
                 'CREATE TABLE IF NOT EXISTS feeds (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT UNIQUE, last_update TIMESTAMP)')
             c.execute(
@@ -39,30 +37,30 @@ class Database:
 
     def update_time(self, feed, timestamp):
         """ update url with last time updated """
-        with dbconn(feeds_db) as c:
+        with dbconn(FEEDS_DB) as c:
             c.execute("UPDATE feeds SET last_update=? where url = ?",
                       (timestamp, feed,))
 
     def add_url(self, feed):
         """ add url to db """
-        with dbconn(feeds_db) as c:
+        with dbconn(FEEDS_DB) as c:
             c.execute("INSERT OR IGNORE INTO feeds (url) VALUES(?)", (feed,))
 
     def feed_time(self, url):
         """ check db for last time a feed was updated """
-        with dbconn(feeds_db) as c:
+        with dbconn(FEEDS_DB) as c:
             feed_date = c.execute(
                 "SELECT last_update FROM feeds WHERE url = ?", (url,)).fetchone()
             return feed_date
 
     def check_song(self, track):
         """ check db for a track """
-        with dbconn(feeds_db) as c:
+        with dbconn(FEEDS_DB) as c:
             song = c.execute(
                 "SELECT url FROM songs WHERE url = ?", (track,)).fetchone()
             return song
 
     def add_song(self, track):
         """ add url to db """
-        with dbconn(feeds_db) as c:
+        with dbconn(FEEDS_DB) as c:
             c.execute("INSERT OR IGNORE INTO songs (url) VALUES(?)", (track,))

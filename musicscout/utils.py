@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 from bs4 import BeautifulSoup
 import datetime
 import os
@@ -13,11 +11,10 @@ from mutagen.easyid3 import EasyID3
 
 from config import Config
 import db
-from messages import Messages
 
 cf = Config().conf_vars()
-media_sites = ['youtu', 'soundcloud']
-user_agent = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
+MEDIA_SITES = ['youtu', 'soundcloud']
+USER_AGENT = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36'
 
 
 class Utils:
@@ -68,7 +65,7 @@ class Utils:
         links = []
         ll = BeautifulSoup(p['content'][0]['value'], 'lxml')
         for l in ll.find_all('a'):
-            if any(m in l.get('href') for m in media_sites):
+            if any(m in l.get('href') for m in MEDIA_SITES):
                 links.append(l.get('href'))
         return links
 
@@ -89,7 +86,7 @@ class Utils:
             try:
               fl = re.search(r'href=[\'"]?([^\'" >]+)', str(embed)).groups()[0]
             except:
-              player = BeautifulSoup(requests.get(link, headers={ "user-agent": user_agent }).content, 'lxml')
+              player = BeautifulSoup(requests.get(link, headers={ "user-agent": USER_AGENT }).content, 'lxml')
               try:
                 fl = player.find('a', { 'class' : 'logo' } ).get('href')
               except:
@@ -99,7 +96,7 @@ class Utils:
     def blog_links(self, p):
         links = []
         try:
-            r = BeautifulSoup( requests.get( p.link, headers={ "user-agent": user_agent}).content, 'lxml')
+            r = BeautifulSoup( requests.get( p.link, headers={ "user-agent": USER_AGENT}).content, 'lxml')
         except requests.exceptions.RequestException as e:
             print(e)
         if r in locals():
@@ -110,7 +107,7 @@ class Utils:
                         bfl = self.bandcamp_embed(f['src'], f)
                         if bfl != False:
                           links.append(bfl)
-                    elif any( m in f['src'] for m in media_sites):
+                    elif any( m in f['src'] for m in MEDIA_SITES):
                         links.append(self.format_link(f['src']))
         return links
 

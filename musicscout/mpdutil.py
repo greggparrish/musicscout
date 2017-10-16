@@ -1,4 +1,3 @@
-#!/usr/bin/python3
 import logging
 import os
 
@@ -9,7 +8,7 @@ c = Config().conf_vars()
 logging.getLogger("mpd").setLevel(logging.WARNING)
 
 
-class MPDConn(object):
+class MPDConn:
     def __init__(self, host, path):
         self.host = c['mpd_host']
         self.port = c['mpd_port']

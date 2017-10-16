@@ -1,5 +1,3 @@
-#!/usr/bin/python3
-
 import datetime
 import logging
 import os
@@ -18,12 +16,13 @@ from mpdutil import mpd_update, make_playlists
 c = Config().conf_vars()
 db = db.Database()
 ut = Utils()
-ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
-logging.basicConfig( filename=ConfigPath + 'scout.log', format='%(message)s', level=logging.INFO)
-media_sites = [ 'youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
+CONFIGPATH = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
+MEDIA_SITES = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
+
+logging.basicConfig(filename=CONFIGPATH + 'scout.log', format='%(message)s', level=logging.INFO)
 
 
-class Musicscout():
+class Musicscout:
     def __init__(self):
         self.dlcount = 0
 
@@ -59,7 +58,7 @@ class Musicscout():
     def get_feed_urls(self):
         ''' Open urls file in .config, make list of feeds '''
         feeds = []
-        feedfile = open(ConfigPath + 'urls')
+        feedfile = open(CONFIGPATH + 'urls')
         for line in feedfile:
             line = line.strip()
             if not line.startswith("#"):
@@ -81,7 +80,7 @@ class Musicscout():
 
     def get_media_links(self, feed, genre):
         ''' Get posts for a feed, strip media links from posts '''
-        print("  ** FEED: checking posts for {}".format(feed))
+        print("  -- FEED: checking posts for {}".format(feed))
         links = []
         posts = feedparser.parse(feed)
         last_update = db.feed_time(feed)[0]
@@ -109,7 +108,7 @@ class Musicscout():
 
     def download_new_media(self, links, genre):
         for l in links:
-            if any(m in l for m in media_sites):
+            if any(m in l for m in MEDIA_SITES):
                 check_song = db.check_song(l)
                 if not check_song:
                     dl = self.yt_dl(l, genre)
@@ -143,11 +142,11 @@ class Musicscout():
                 filename = "{}.mp3".format(base)
                 vidtitle = vidinfo.get('title', None)
                 logging.info( "    ** DL: {} from {}".format(vidtitle, link))
-                print("  ** DL: {} from {}".format(vidtitle, link))
+                print("     ** DL: {} from {}".format(vidtitle, link))
                 return filename
             except Exception as e:
                 logging.info( "    ** FAILED: {} {}".format(link, e))
-                print("  ** FAILED: {} {}".format(link, e))
+                print("     ** FAILED: {} {}".format(link, e))
                 return False
 
 if __name__ == '__main__':

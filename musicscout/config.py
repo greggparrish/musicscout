@@ -1,18 +1,16 @@
-#!/usr/bin/python3
-
 import os
 import configparser
 
-ConfigPath = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
+CONFIGPATH = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 
-""" read or create config file """
+''' read or create config file '''
 conf = configparser.ConfigParser()
 
 
-class Config(object):
+class Config:
     def __init__(self):
-        self.build_dirs(ConfigPath)
-        confvars = conf.read(os.path.join(ConfigPath, 'config'))
+        self.build_dirs(CONFIGPATH)
+        confvars = conf.read(os.path.join(CONFIGPATH, 'config'))
         if not confvars:
             self.create_config()
         cache_dir = self.conf_vars()['cache_dir']
@@ -32,7 +30,7 @@ class Config(object):
     def create_config(self):
         """ Create config file """
         print("No config file found at ~/.config/musicscout, using default settings. Creating file with defaults.")
-        path = self.format_path(os.path.join(ConfigPath, 'config'))
+        path = self.format_path(os.path.join(CONFIGPATH, 'config'))
         conf.add_section("storage")
         conf.set("storage", "cache", "~/.config/musicscout/musicscout_cache")
         conf.set("storage", "urls", "~/.config/musicscout/urls")
