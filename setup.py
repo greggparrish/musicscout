@@ -2,10 +2,10 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-if sys.version_info < (3,0):
-  sys.exit("Musicscout requires python 3.")
+if sys.version_info < (3,6):
+  sys.exit("Musicscout requires python 3.6")
 
-version = '1.0'
+version = '1.10'
 
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as f:
   required = f.read().splitlines()

@@ -37,7 +37,7 @@ def make_playlists():
     with MPDConn(c['mpd_host'], c['mpd_port']) as m:
         for g in list(os.walk(cachedir))[1:]:
             genre = g[0].split('/')[-1]
-            playlist = "musicscout_{}".format(genre)
+            playlist = f"musicscout_{genre}"
             m.playlistclear(playlist)
             for s in g[2]:
                 try:

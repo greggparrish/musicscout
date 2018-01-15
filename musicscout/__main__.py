@@ -16,20 +16,21 @@ Options:
 
 """ Code:
 Gregory Parrish
-    http://github.com/greggparrish
+    https://github.com/greggparrish/musicscout
 """
 
 import os
-from docopt import docopt
+import argparse
 
 from musicscout import Musicscout
 
-
-
 if __name__ == '__main__':
-    arguments = docopt(__doc__, version='musicscout 1.0')
+    p=argparse.ArgumentParser(description='Get media files from an updated list of music blogs.')
+    p.add_argument('-v', '--version', action='version', version='musicscout v. 1.10')
+    args=p.parse_args()
+
     try:
         with Musicscout() as ms:
             ms.get_feed_urls()
     except Exception as e:
-        print('ERROR: {}'.format(e))
+        print(f'ERROR: {e}')

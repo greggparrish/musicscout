@@ -29,8 +29,7 @@ class Musicscout:
     def __enter__(self):
         ''' Symlink download dir to mpd dir if not already, start log '''
         ut.symlink_musicdir()
-        logging.info("\n### INIT: SCOUT RUN ON: {}".format(
-            datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        logging.info(f'\n### INIT: SCOUT RUN ON: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
         return self
 
     def __exit__(self, exc_class, exc, traceback):
@@ -39,8 +38,8 @@ class Musicscout:
         mpd_update()
         sleep(10)
         make_playlists()
-        logging.info("### DL TOTAL: {}".format(self.dlcount))
-        logging.info("### END: SCOUT RUN ON: {}".format( datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")))
+        logging.info(f"### DL TOTAL: {self.dlcount}")
+        logging.info(f'### END: SCOUT RUN ON: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
         return True
 
     def compare_feed_date(self, lu, posts):
@@ -80,7 +79,7 @@ class Musicscout:
 
     def get_media_links(self, feed, genre):
         ''' Get posts for a feed, strip media links from posts '''
-        print("  -- FEED: checking posts for {}".format(feed))
+        print(f"  -- FEED: checking posts for {feed}")
         links = []
         posts = feedparser.parse(feed)
         last_update = db.feed_time(feed)[0]
@@ -139,14 +138,14 @@ class Musicscout:
                 vidinfo = ydl.extract_info(link, download=True)
                 filename = ydl.prepare_filename(vidinfo)
                 base = '.'.join(filename.split('.')[:-1])
-                filename = "{}.mp3".format(base)
+                filename = f"{base}.mp3"
                 vidtitle = vidinfo.get('title', None)
-                logging.info( "    ** DL: {} from {}".format(vidtitle, link))
-                print("     ** DL: {} from {}".format(vidtitle, link))
+                logging.info(f"    ** DL: {vidtitle} from {link}")
+                print(f"     ** DL: {vidtitle} from {link}")
                 return filename
             except Exception as e:
-                logging.info( "    ** FAILED: {} {}".format(link, e))
-                print("     ** FAILED: {} {}".format(link, e))
+                logging.info(f"    ** FAILED: {link} {e}")
+                print(f"     ** FAILED: {link} {e}")
                 return False
 
 if __name__ == '__main__':
@@ -154,4 +153,4 @@ if __name__ == '__main__':
         with Musicscout() as ms:
             ms.get_feed_urls()
     except Exception as e:
-        print('ERROR: {}'.format(e))
+        print(f'ERROR: {e}')
