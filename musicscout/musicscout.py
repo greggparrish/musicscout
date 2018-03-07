@@ -2,6 +2,7 @@ import datetime
 import logging
 import os
 import re
+import sys
 from time import mktime, sleep
 
 
@@ -57,25 +58,32 @@ class Musicscout:
     def get_feed_urls(self):
         ''' Open urls file in .config, make list of feeds '''
         feeds = []
-        feedfile = open(CONFIGPATH + 'urls')
-        for line in feedfile:
-            line = line.strip()
-            if not line.startswith("#"):
-                line = line.replace('\n', '').strip()
-                line = line.split('|')
-                try:
-                    genre = re.sub( r'[-\s]+', '-', (re.sub( r'[^\w\s-]', '', line[1]).strip().lower()))
-                except:
-                    genre = 'uncategorized'
-                if line[0]:
-                    feed = line[0].strip()
-                    db.add_url(feed)
-                    feeds += [[feed, genre]]
-                    self.get_media_links(feed, genre)
-                    now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    db.update_time(feed, now)
-        feedfile.close()
-        return True
+        try:
+            feedfile = open(CONFIGPATH + 'urls')
+        except:
+            feedfile = Config().create_urls()
+        if feedfile == True:
+            print(f"Add urls to url file at: {CONFIGPATH + 'urls'}")
+            sys.exit
+        else:
+            for line in feedfile:
+                line = line.strip()
+                if not line.startswith("#"):
+                    line = line.replace('\n', '').strip()
+                    line = line.split('|')
+                    try:
+                        genre = re.sub( r'[-\s]+', '-', (re.sub( r'[^\w\s-]', '', line[1]).strip().lower()))
+                    except:
+                        genre = 'uncategorized'
+                    if line[0]:
+                        feed = line[0].strip()
+                        db.add_url(feed)
+                        feeds += [[feed, genre]]
+                        self.get_media_links(feed, genre)
+                        now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        db.update_time(feed, now)
+            feedfile.close()
+            return True
 
     def get_media_links(self, feed, genre):
         ''' Get posts for a feed, strip media links from posts '''
@@ -149,8 +157,5 @@ class Musicscout:
                 return False
 
 if __name__ == '__main__':
-    try:
-        with Musicscout() as ms:
-            ms.get_feed_urls()
-    except Exception as e:
-        print(f'ERROR: {e}')
+    ms = Musicscout()
+    ms.get_feed_urls()

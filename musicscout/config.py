@@ -45,6 +45,14 @@ class Config:
         with open(path, "w") as config_file:
             conf.write(config_file)
 
+    def create_urls(self):
+        """ Create urls file """
+        print("No urls file found at ~/.config/musicscout. Creating file, but you'll need to add rss feeds to it.")
+        path = self.format_path(os.path.join(CONFIGPATH, 'urls'))
+        with open(path, 'a') as url_file:
+            url_file.write('# format: url | genre\n# http://www.post-punk.com/feed/ | postpunk\n# Check https://github.com/greggparrish/musicscout/blob/master/urls_example for more examples')
+        return True
+
     def build_dirs(self, path):
         """ Create musicscout dir and cache dir in .config """
         if not os.path.exists(path):
