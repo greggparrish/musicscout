@@ -99,7 +99,7 @@ class Utils:
             r = BeautifulSoup( requests.get( p.link, headers={ "user-agent": USER_AGENT}).content, 'lxml')
         except requests.exceptions.RequestException as e:
             print(e)
-        if r in locals():
+        if r:
             frames = r.find_all('iframe')
             for f in frames:
                 if f.has_attr('src'):
