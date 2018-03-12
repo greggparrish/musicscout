@@ -20,7 +20,13 @@ ut = Utils()
 CONFIGPATH = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 MEDIA_SITES = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
 
-logging.basicConfig(filename=CONFIGPATH + 'scout.log', format='%(message)s', level=logging.INFO)
+logging.basicConfig(
+    format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
+	level=logging.INFO,
+    handlers=[
+        logging.FileHandler("{}/{}.log".format(CONFIGPATH, 'scout')),
+        logging.StreamHandler(sys.stdout)
+    ])
 
 
 class Musicscout:
@@ -30,7 +36,7 @@ class Musicscout:
     def __enter__(self):
         ''' Symlink download dir to mpd dir if not already, start log '''
         ut.symlink_musicdir()
-        logging.info(f'\n### INIT: SCOUT RUN ON: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        logging.info(f'### START: SCOUT RUN')
         return self
 
     def __exit__(self, exc_class, exc, traceback):
@@ -40,7 +46,7 @@ class Musicscout:
         sleep(10)
         make_playlists()
         logging.info(f"### DL TOTAL: {self.dlcount}")
-        logging.info(f'### END: SCOUT RUN ON: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}')
+        logging.info(f'### END: SCOUT RUN\n ')
         return True
 
     def compare_feed_date(self, lu, posts):
@@ -149,11 +155,9 @@ class Musicscout:
                 filename = f"{base}.mp3"
                 vidtitle = vidinfo.get('title', None)
                 logging.info(f"    ** DL: {vidtitle} from {link}")
-                print(f"     ** DL: {vidtitle} from {link}")
                 return filename
             except Exception as e:
                 logging.info(f"    ** FAILED: {link} {e}")
-                print(f"     ** FAILED: {link} {e}")
                 return False
 
 if __name__ == '__main__':
