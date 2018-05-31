@@ -93,7 +93,7 @@ class Musicscout:
 
     def get_media_links(self, feed, genre):
         ''' Get posts for a feed, strip media links from posts '''
-        print(f"  -- FEED: checking posts for {feed}")
+        print(f"-- FEED: checking posts for {feed}")
         links = []
         posts = feedparser.parse(feed)
         last_update = db.feed_time(feed)[0]
@@ -154,10 +154,10 @@ class Musicscout:
                 base = '.'.join(filename.split('.')[:-1])
                 filename = f"{base}.mp3"
                 vidtitle = vidinfo.get('title', None)
-                logging.info(f"    ** DL: {vidtitle} from {link}")
+                logging.info(f"** DL: {vidtitle} from {link}")
                 return filename
             except Exception as e:
-                logging.info(f"    ** FAILED: {link} {e}")
+                logging.info(f"** FAILED: {link} {e}")
                 return False
 
 if __name__ == '__main__':
