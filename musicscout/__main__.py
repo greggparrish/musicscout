@@ -1,3 +1,6 @@
+import argparse
+from musicscout import Musicscout
+
 """
 musicscout
 Get media files from an updated list of music blogs
@@ -19,15 +22,11 @@ Gregory Parrish
     https://github.com/greggparrish/musicscout
 """
 
-import os
-import argparse
-
-from musicscout import Musicscout
 
 if __name__ == '__main__':
-    p=argparse.ArgumentParser(description='Get media files from an updated list of music blogs.')
+    p = argparse.ArgumentParser(description='Get media files from an updated list of music blogs.')
     p.add_argument('-v', '--version', action='version', version='musicscout v. 1.10')
-    args=p.parse_args()
+    args = p.parse_args()
 
     try:
         with Musicscout() as ms:

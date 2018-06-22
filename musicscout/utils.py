@@ -1,16 +1,13 @@
 from bs4 import BeautifulSoup
-import datetime
 import os
 import re
 import requests
-import time
 
 from mutagen import File
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.easyid3 import EasyID3
 
 from config import Config
-import db
 
 cf = Config().conf_vars()
 MEDIA_SITES = ['youtu', 'soundcloud']
@@ -52,9 +49,9 @@ class Utils:
             fl = link.split('?')[0]
         elif 'soundcloud' in link:
             if 'player/?url' in link:
-                fl = "https{}".format( re.search( r'https(.*?)\&', link).group(1).replace( '%2F', '/'))
+                fl = "https{}".format(re.search(r'https(.*?)\&', link).group(1).replace('%2F', '/'))
             else:
-                fl = "https://api{}".format(link.split('api') [1].replace('%2F', '/'))
+                fl = "https://api{}".format(link.split('api')[1].replace('%2F', '/'))
         elif 'redditmedia' in link:
             fl = "https:" + link
         else:
@@ -84,19 +81,19 @@ class Utils:
             if 'http' not in link:
                 link = 'https:' + link
             try:
-              fl = re.search(r'href=[\'"]?([^\'" >]+)', str(embed)).groups()[0]
-            except:
-              player = BeautifulSoup(requests.get(link, headers={ "user-agent": USER_AGENT }).content, 'lxml')
-              try:
-                fl = player.find('a', { 'class' : 'logo' } ).get('href')
-              except:
-                fl = False
+                fl = re.search(r'href=[\'"]?([^\'" >]+)', str(embed)).groups()[0]
+            except Exception as e:
+                player = BeautifulSoup(requests.get(link, headers={"user-agent": USER_AGENT}).content, 'lxml')
+                try:
+                    fl = player.find('a', {'class': 'logo'}).get('href')
+                except Exception as e:
+                    fl = False
         return fl
 
     def blog_links(self, p):
         links = []
         try:
-            r = BeautifulSoup( requests.get( p.link, headers={ "user-agent": USER_AGENT}).content, 'lxml')
+            r = BeautifulSoup(requests.get(p.link, headers={"user-agent": USER_AGENT}).content, 'lxml')
         except requests.exceptions.RequestException as e:
             print(e)
         if r:
@@ -105,9 +102,9 @@ class Utils:
                 if f.has_attr('src'):
                     if 'bandcamp' in f['src']:
                         bfl = self.bandcamp_embed(f['src'], f)
-                        if bfl != False:
-                          links.append(bfl)
-                    elif any( m in f['src'] for m in MEDIA_SITES):
+                        if bfl is not False:
+                            links.append(bfl)
+                    elif any(m in f['src'] for m in MEDIA_SITES):
                         links.append(self.format_link(f['src']))
         return links
 

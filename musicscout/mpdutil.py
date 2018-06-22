@@ -40,7 +40,7 @@ def make_playlists():
             playlist = f"musicscout_{genre}"
             try:
                 m.playlistclear(playlist)
-            except:
+            except Exception as e:
                 pass
             for s in g[2]:
                 try:

@@ -22,7 +22,7 @@ MEDIA_SITES = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
 
 logging.basicConfig(
     format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
-	level=logging.INFO,
+    level=logging.INFO,
     handlers=[
         logging.FileHandler("{}/{}.log".format(CONFIGPATH, 'scout')),
         logging.StreamHandler(sys.stdout)
@@ -58,7 +58,7 @@ class Musicscout:
                 return ft
             else:
                 return False
-        except:
+        except Exception as e:
             return False
 
     def get_feed_urls(self):
@@ -66,9 +66,9 @@ class Musicscout:
         feeds = []
         try:
             feedfile = open(CONFIGPATH + 'urls')
-        except:
+        except Exception as e:
             feedfile = Config().create_urls()
-        if feedfile == True:
+        if feedfile is True:
             print(f"Add urls to url file at: {CONFIGPATH + 'urls'}")
             sys.exit
         else:
@@ -78,8 +78,8 @@ class Musicscout:
                     line = line.replace('\n', '').strip()
                     line = line.split('|')
                     try:
-                        genre = re.sub( r'[-\s]+', '-', (re.sub( r'[^\w\s-]', '', line[1]).strip().lower()))
-                    except:
+                        genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '', line[1]).strip().lower()))
+                    except Exception as e:
                         genre = 'uncategorized'
                     if line[0]:
                         feed = line[0].strip()
@@ -93,19 +93,19 @@ class Musicscout:
 
     def get_media_links(self, feed, genre):
         ''' Get posts for a feed, strip media links from posts '''
-        print(f"-- FEED: checking posts for {feed}")
+        logging.info(f"-- FEED: checking posts for {feed}")
         links = []
         posts = feedparser.parse(feed)
         last_update = db.feed_time(feed)[0]
-        if last_update != None:
+        if last_update is not None:
             try:
                 lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
-            except:
+            except Exception as e:
                 lu = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             lu = None
         ft = self.compare_feed_date(lu, posts)
-        if ft != False:
+        if ft is not False:
             for p in posts.entries:
                 pt = datetime.datetime.fromtimestamp(mktime(p.updated_parsed))
                 if ft is None or lu is None or pt > lu:
@@ -125,9 +125,9 @@ class Musicscout:
                 check_song = db.check_song(l)
                 if not check_song:
                     dl = self.yt_dl(l, genre)
-                    if 'youtu' in l and dl != False:
+                    if 'youtu' in l and dl is not False:
                         ut.add_metadata(dl, l, genre)
-                    add_song = db.add_song(l)
+                    db.add_song(l)
                     self.dlcount += 1
         return True
 
@@ -159,6 +159,7 @@ class Musicscout:
             except Exception as e:
                 logging.info(f"** FAILED: {link} {e}")
                 return False
+
 
 if __name__ == '__main__':
     ms = Musicscout()
