@@ -126,8 +126,9 @@ class Utils:
                 song = EasyID3(path)
             except ID3NoHeaderError:
                 song = File(path, easy=True)
+            EasyID3.RegisterTextKey('comment', 'COMM')
             song['title'] = title
             song['artist'] = artist
             song['genre'] = genre
-            song['website'] = link
+            song['comment'] = link
             song.save()
