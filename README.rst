@@ -10,25 +10,22 @@ The app doesn't currently delete old files from the cache, so you'll need to cle
 REQUIRES
 --------
 - **Python 3.6**
+- ffmpeg or avconv
 - MPD
 
 INSTALL
 -------
-- Download zip
-- unzip musicscout-master.zip
-- cd musicscout-master
-- pip3 install -r requirements.txt
+- wget https://github.com/greggparrish/musicscout/archive/master.tar.gz -O musicscout.tar.gz 
+- pip install musicscout.tar.gz 
 
 CONFIG
 ------
 - config file: ~/.config/musicscout/config
-- set cache (dir for mp3s), default: ~/.config/musicscout/musicscout_cache
-- set url file: url | genre (see urls_example_ in repo)
 - set mpd host, port, and music directory
-
-.. _urls_example: https://github.com/greggparrish/musicscout/blob/master/urls_example
+- set cache (dir for mp3s), default: ~/.config/musicscout/musicscout_cache
+- set url file: url | genre (see [urls_example](https://github.com/greggparrish/musicscout/blob/master/urls_example) in repo)
 
 USAGE
 -----
-- python3 musicscout
-
+- musicscout
+- (if you get download errors, try updating [youtube-dl](https://github.com/ytdl-org/youtube-dl))

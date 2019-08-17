@@ -8,6 +8,7 @@
 .installed.cfg
 bin
 build
+core
 develop-eggs
 dist
 eggs

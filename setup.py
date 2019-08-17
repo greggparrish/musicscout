@@ -3,9 +3,9 @@ import sys
 from setuptools import setup, find_packages
 
 if sys.version_info < (3.6):
-    sys.exit("Musicscout requires python 3.6")
+    sys.exit("Musicscout requires python 3.6+")
 
-version = '1.10'
+version = '1.80'
 
 with open(os.path.join(os.path.dirname(__file__), 'requirements.txt')) as f:
     required = f.read().splitlines()
@@ -25,7 +25,7 @@ setup(
     install_requires=required,
     entry_points={
         'console_scripts': [
-            'musicscout=musicscout.musicscout:main',
+            'musicscout=musicscout.__main__:main',
         ],
     },
 )
