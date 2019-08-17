@@ -2,8 +2,8 @@ import os
 import sys
 from setuptools import setup, find_packages
 
-if sys.version_info < (3.6):
-    sys.exit("Musicscout requires python 3.6+")
+if sys.version_info < (3, 6):
+    sys.exit("Musicscout requires python >= 3.6")
 
 version = '1.80'
 
