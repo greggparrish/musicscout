@@ -2,7 +2,8 @@ import logging
 import os
 
 from mpd import MPDClient
-from config import Config
+
+from .config import Config
 
 c = Config().conf_vars()
 logging.getLogger("mpd").setLevel(logging.WARNING)
@@ -40,7 +41,7 @@ def make_playlists():
             playlist = f"musicscout_{genre}"
             try:
                 m.playlistclear(playlist)
-            except Exception as e:
+            except Exception:
                 pass
             for s in g[2]:
                 try:

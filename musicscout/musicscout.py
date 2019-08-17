@@ -9,10 +9,10 @@ from time import mktime, sleep
 import feedparser
 import youtube_dl
 
-from config import Config
-import db
-from utils import Utils
-from mpdutil import mpd_update, make_playlists
+from .config import Config
+from . import db
+from .utils import Utils
+from .mpdutil import mpd_update, make_playlists
 
 c = Config().conf_vars()
 db = db.Database()
@@ -20,13 +20,11 @@ ut = Utils()
 CONFIGPATH = os.path.join(os.path.expanduser('~'), '.config/musicscout/')
 MEDIA_SITES = ['youtu', 'bandcamp.com', 'soundcloud', 'redditmedia']
 
-logging.basicConfig(
-    format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
-    level=logging.INFO,
-    handlers=[
-        logging.FileHandler("{}/{}.log".format(CONFIGPATH, 'scout')),
-        logging.StreamHandler(sys.stdout)
-    ])
+logging.basicConfig(format="%(asctime)s [%(levelname)-5.5s]  %(message)s",
+                    level=logging.INFO,
+                    handlers=[logging.FileHandler("{}/{}.log".format(CONFIGPATH, 'scout')),
+                              logging.StreamHandler(sys.stdout)
+                              ])
 
 
 class Musicscout:
@@ -58,7 +56,7 @@ class Musicscout:
                 return ft
             else:
                 return False
-        except Exception as e:
+        except Exception:
             return False
 
     def get_feed_urls(self):
@@ -66,7 +64,7 @@ class Musicscout:
         feeds = []
         try:
             feedfile = open(CONFIGPATH + 'urls')
-        except Exception as e:
+        except Exception:
             feedfile = Config().create_urls()
         if feedfile is True:
             print(f"Add urls to url file at: {CONFIGPATH + 'urls'}")
@@ -79,7 +77,7 @@ class Musicscout:
                     line = line.split('|')
                     try:
                         genre = re.sub(r'[-\s]+', '-', (re.sub(r'[^\w\s-]', '', line[1]).strip().lower()))
-                    except Exception as e:
+                    except Exception:
                         genre = 'uncategorized'
                     if line[0]:
                         feed = line[0].strip()
@@ -100,7 +98,7 @@ class Musicscout:
         if last_update is not None:
             try:
                 lu = datetime.datetime.strptime(last_update, '%Y-%m-%d %H:%M:%S')
-            except Exception as e:
+            except Exception:
                 lu = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             lu = None
@@ -133,20 +131,18 @@ class Musicscout:
 
     def yt_dl(self, link, genre):
         genre_dir = os.path.join(c['cache_dir'], genre)
-        ydl_opts = {
-            'restrict_filenames': True,
-            'outtmpl': genre_dir + '/%(title)s__%(id)s.%(ext)s',
-            'format': 'bestaudio/best',
-            'get_filename': True,
-            'max_downloads': '3',
-            'quiet': True,
-            'no_warnings': True,
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
-        }
+        ydl_opts = {'restrict_filenames': True,
+                    'outtmpl': genre_dir + '/%(title)s__%(id)s.%(ext)s',
+                    'format': 'bestaudio/best',
+                    'get_filename': True,
+                    'max_downloads': '3',
+                    'quiet': True,
+                    'no_warnings': True,
+                    'postprocessors': [{'key': 'FFmpegExtractAudio',
+                                        'preferredcodec': 'mp3',
+                                        'preferredquality': '192',
+                                        }],
+                    }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             try:
                 vidinfo = ydl.extract_info(link, download=True)
@@ -161,6 +157,23 @@ class Musicscout:
                 return False
 
 
+def main():
+    """
+    musicscout
+    Get media files from an updated list of music blogs
+    Config file at: ~/.config/musicscout/config
+
+    Usage:
+        musicscout
+
+    Code: Gregory Parrish https://github.com/greggparrish/musicscout
+    """
+    try:
+        with Musicscout() as ms:
+            ms.get_feed_urls()
+    except Exception as e:
+        print(f'ERROR: {e}')
+
+
 if __name__ == '__main__':
-    ms = Musicscout()
-    ms.get_feed_urls()
+    main()

@@ -16,6 +16,12 @@ class Config:
         cache_dir = self.conf_vars()['cache_dir']
         self.build_dirs(self.format_path(cache_dir))
 
+    def build_dirs(self, path):
+        """ Create musicscout dir and cache dir in .config """
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+
     def conf_vars(self):
         conf_vars = {
             'browser': conf['browser']['browser'],
@@ -52,12 +58,6 @@ class Config:
         with open(path, 'a') as url_file:
             url_file.write('# format: url | genre\n# http://www.post-punk.com/feed/ | postpunk\n# Check https://github.com/greggparrish/musicscout/blob/master/urls_example for more examples')
         return True
-
-    def build_dirs(self, path):
-        """ Create musicscout dir and cache dir in .config """
-        if not os.path.exists(path):
-            os.makedirs(path)
-        return path
 
     def format_path(self, path):
         if '~' in path:

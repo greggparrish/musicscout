@@ -7,7 +7,7 @@ from mutagen import File
 from mutagen.id3 import ID3NoHeaderError
 from mutagen.easyid3 import EasyID3
 
-from config import Config
+from .config import Config
 
 cf = Config().conf_vars()
 MEDIA_SITES = ['youtu', 'soundcloud']
@@ -82,11 +82,11 @@ class Utils:
                 link = 'https:' + link
             try:
                 fl = re.search(r'href=[\'"]?([^\'" >]+)', str(embed)).groups()[0]
-            except Exception as e:
+            except Exception:
                 player = BeautifulSoup(requests.get(link, headers={"user-agent": USER_AGENT}).content, 'lxml')
                 try:
                     fl = player.find('a', {'class': 'logo'}).get('href')
-                except Exception as e:
+                except Exception:
                     fl = False
         return fl
 
@@ -112,7 +112,7 @@ class Utils:
         if os.path.isfile(path):
             fn = path.split('/')[-1]
             vi = fn.split('__')[0]
-            vidinfo = re.sub("[\(\[].*?[\)\]]", "", vi)
+            vidinfo = re.sub(r"[\(\[].*?[\)\]]", "", vi)
             if '-' in vidinfo:
                 artist = vidinfo.split('-')[0]
                 fulltitle = vidinfo.split('-')[1]
