@@ -131,17 +131,18 @@ class Musicscout:
 
     def yt_dl(self, link, genre):
         genre_dir = os.path.join(c['cache_dir'], genre)
-        ydl_opts = {'restrict_filenames': True,
-                    'outtmpl': genre_dir + '/%(title)s__%(id)s.%(ext)s',
-                    'format': 'bestaudio/best',
+        ydl_opts = {'format': 'bestaudio/best',
                     'get_filename': True,
                     'max_downloads': '3',
-                    'quiet': True,
+                    'max-filesize': '10m',
                     'no_warnings': True,
-                    'postprocessors': [{'key': 'FFmpegExtractAudio',
-                                        'preferredcodec': 'mp3',
-                                        'preferredquality': '192',
-                                        }],
+                    'nooverwrites': True,
+                    'noplaylist': True,
+                    'outtmpl': genre_dir + '/%(title)s__%(id)s.%(ext)s',
+                    'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192', }],
+                    'quiet': True,
+                    'rejecttitle': True,
+                    'restrict_filenames': True
                     }
         with youtube_dl.YoutubeDL(ydl_opts) as ydl:
             try:
