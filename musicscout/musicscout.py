@@ -112,7 +112,10 @@ class Musicscout:
                     elif 'tumblr' in feed:
                         links = ut.tumblr_links(p)
                     else:
-                        links = ut.blog_links(p)
+                        try:
+                            links = ut.blog_links(p)
+                        except:
+                            continue
                     if links:
                         self.download_new_media(links, genre)
         return ft
