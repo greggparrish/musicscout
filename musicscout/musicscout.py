@@ -144,8 +144,8 @@ class Musicscout:
                     'rejecttitle': True,
                     'restrict_filenames': True
                     }
-        with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-            try:
+        try:
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 vidinfo = ydl.extract_info(link, download=True)
                 filename = ydl.prepare_filename(vidinfo)
                 base = '.'.join(filename.split('.')[:-1])
@@ -153,9 +153,9 @@ class Musicscout:
                 vidtitle = vidinfo.get('title', None)
                 logging.info(f"** DL: {vidtitle} from {link}")
                 return filename
-            except Exception as e:
-                logging.info(f"** FAILED: {link} {e}")
-                return False
+        except Exception as e:
+            logging.info(f"** FAILED: {link} {e}")
+            return False
 
 
 def main():
