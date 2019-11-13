@@ -83,7 +83,10 @@ class Musicscout:
                         feed = line[0].strip()
                         db.add_url(feed)
                         feeds += [[feed, genre]]
-                        self.get_media_links(feed, genre)
+                        try:
+                            self.get_media_links(feed, genre)
+                        except Exception as exc:
+                            logging.info(f"-- ERROR: {feed} had exception: {exc}")
                         now = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         db.update_time(feed, now)
             feedfile.close()
